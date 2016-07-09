@@ -14,7 +14,7 @@ if __name__ == "__main__" :
         fgl, fgb = float(part[3]), float(part[4])
         fras, fdecs = part[5], part[6]
 
-        if fgb < 0 or (fgl > 0 and fra < 181) :
+        if fdec > -2 and (fgb < 0 or (fgl > 0 and fra < 181)) :
             f.write(fmt % (fid, fra, fdec, fgl, fgb, fras, fdecs))
 
     f.close()
