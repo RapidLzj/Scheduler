@@ -4,13 +4,60 @@
 
 ----
 
-## Config File
+## Files and directories structure
 
-## Block and Field File
+(all angle in degrees)
 
-## Observed Log
+* `/`
+    + `programs`
+* `/conf/`
+    + `field.txt`       list of all fields, col: field ra dec gb gl
+    + `block.txt`       list of all blocks, col: block field list(up to 5)
+    + `exp.plan.txt`   plan of exposures, col: code filter expt repeat
+    + `exp.factor.txt` factors of exp, col: filter expt code factor, ...
+        use filter+expt to locate code and factor ...
+        sum factor to check finished or not
+* `/obsed/runcode/`   usually runcode is yyyymm, but can be others
+    + `obsed.lst`           finished list of this run, col: field factor_list(by code)
+    + `obsed.yyyymmddhhmmss.bak`  backup of finished list
+    + `check.yyyymmdd.lst`  daily check list, col: filename filesn field filter expt quality mag10limit
+    + `files.yyyymmdd.lst`  daily file list, col: filename quality (0/1/2)
+* `/plan/runcode/yyyymmdd/`
+    + `plan.yyyymmdd.txt`  merged plan of this day
+    + `s##.######.txt`     plan of one block, block sn, from 01, and block id
+    + `plan.yyyymmdd.eps`  footprint of finished and planed fields
 
-## Choose Target
+## Programs
 
+### Check
+
+Use ls to generage a file list: `files.xxx.lst`.
+
+Check file header info, from `files.xxx.lst` to `check.xxx.lst`.
+
+### Collect
+
+Collect file info from daily check list and generate obsed list.
+
+### HeaderInfo
+
+Extract info from fits file header, use this to adapt to different telescope.
+
+### Planner
+
+Make plan of each day.
+
+1. Load all blocks and fields
+2. Load finished fields
+3. Remove finished fields, get new blocks
+4. Calc JD and sidereal time of midnight, and moon position
+5. Remove blocks with moon angle lt 90
+6. Choose a best block
+    + Get current JD and sidereal time
+    + Calc azi and alt of all blocks, remove alt gt 80
+    + Select min of dec * 0.5 + (90-alt)*0.5
+7. Make a script for the block, and calculate time cost
+8. Get new "current" time, if before dawn, goto 4
+9. Ending work
 
 
