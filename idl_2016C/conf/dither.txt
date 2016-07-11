@@ -1,0 +1,2 @@
+0.02  0.02 #Dither in RA and Dec, degree
+# dither value must be 2 float values in the first line
