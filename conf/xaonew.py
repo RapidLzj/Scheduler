@@ -1,4 +1,6 @@
-
+"""
+    Remove spring and summer part from original plan
+"""
 
 if __name__ == "__main__" :
     f = open("field.xao.txt", "r")

@@ -1,3 +1,6 @@
+"""
+    Cut SDSS covered area from nowt plan
+"""
 
 import numpy as np
 
