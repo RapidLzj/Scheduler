@@ -29,12 +29,12 @@ def headerinfo ( fitsfile ) :
     telescope = prihdr["TELESCOP"].strip()
     if telescope == "Steward 2.3 m (bok)" :
         filesn = int(fitsfile[-9:-5])
-        imgtyp = prihdr["IMAGETYP"].strip()
-        object = prihdr["OBJECT"].strip()
-        filter = prihdr["FILTER"].strip()
-        expt   = float(prihdr["EXPTIME"])
-        radeg  = util.hms2dec(prihdr["RA"].strip())
-        decdeg = util.dms2dec(prihdr["DEC"].strip())
+        imgtyp = util.sxpar(prihdr, "IMAGETYP")
+        object = util.sxpar(prihdr, "OBJECT")
+        filter = util.sxpar(prihdr, "FILTER")
+        expt   = float(util.sxpar(prihdr, "EXPTIME", 0.0))
+        radeg  = util.hms2dec(util.sxpar(prihdr, "RA", "0"))
+        decdeg = util.dms2dec(util.sxpar(prihdr, "DEC", "0"))
         res = {"filename": fitsfile,
                "filesn": filesn,
                "imagetype": imgtyp,
@@ -46,12 +46,12 @@ def headerinfo ( fitsfile ) :
 
     elif telescope == "1M-WideField" :
         filesn = int(fitsfile[-9:-5])
-        imgtyp = prihdr["OBSTYPE"].strip()
-        object = prihdr["OBJECT"].strip()
-        filter = prihdr["FILTER"].strip()
-        expt   = float(prihdr["EXPTIME"].strip())
-        radeg  = float(prihdr["OBJCTRA"].strip())
-        decdeg = float(prihdr["OBJCTDEC"].strip())
+        imgtyp = util.sxpar(prihdr, "OBSTYPE")
+        object = util.sxpar(prihdr, "OBJECT")
+        filter = util.sxpar(prihdr, "FILTER")
+        expt   = float(util.sxpar(prihdr, "EXPTIME", 0.0))
+        radeg  = float(util.sxpar(prihdr, "OBJCTRA", 0.0))
+        decdeg = float(util.sxpar(prihdr, "OBJCTDEC", 0.0))
         res = {"filename": fitsfile,
                "filesn": filesn,
                "imagetype": imgtyp,

@@ -3,7 +3,9 @@
     Utilities for Scripts
     v1.0 : By Jie Zheng, 201607, Tucson, AZ, USA
 
-    Providing: hms/dms to and from decimal
+    Providing:
+        hms/dms to and from decimal
+        sxpar, get value from fits header
 """
 
 
@@ -47,3 +49,12 @@ def dec2hms ( dec, len=11 ) :
     """
     hms = dec2dms(dec/15.0, len+1)
     return hms[1:]
+
+def sxpar ( header, key, default=None ) :
+    """ Check weather the key is in header, if yes, return value, else return default
+    """
+    if key in header.keys() :
+        v = header[key]
+    else :
+        v = default
+    return v
