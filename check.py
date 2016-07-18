@@ -21,7 +21,7 @@ def check ( filelist, checklist ) :
     flst = open(filelist, "r").readlines()
     clst = []
     for f in flst :
-        info = headerinfo.headerinfo(f)
+        info = headerinfo.headerinfo(f.strip())
         if info != None :
             clst.append(info)
 
