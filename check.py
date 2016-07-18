@@ -30,9 +30,10 @@ def check ( filelist, checklist ) :
     f = open(checklist, "w")
     for c in clst :
         f.write(chkfmt(c))
+        print ("{filename}".format(c))
     f.close()
 
-    print ("Success in checking {0} files in {1}.".format(len(flst), filelist))
+    print ("Successfully check {0} files from \'{1}\'.".format(len(clst), filelist))
 
 
 if __name__ =="__main__" :
