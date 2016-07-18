@@ -24,14 +24,12 @@ def check ( filelist, checklist ) :
         info = headerinfo.headerinfo(f.strip())
         if info != None :
             clst.append(info)
-            break
 
     chkfmt = ("{0[filesn]:0>4d} {0[imagetype]:8s} {0[object]:10s} {0[filter]:8s} {0[exptime]:>5.1f} " +
               "{0[ra]:>9.5f} {0[dec]:>+9.5f} {0[filename]}\n").format
     f = open(checklist, "w")
     for c in clst :
         f.write(chkfmt(c))
-        print ("{filename}".format(c))
     f.close()
 
     print ("Successfully check {0} files from \'{1}\'.".format(len(clst), filelist))
