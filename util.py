@@ -62,8 +62,8 @@ def sxpar ( header, key, default=None ) :
     return v
 
 def progress_bar ( value, v_to = 100, v_from = 0, length=80,
-                   pencent_format="{:>5.1%}", value_format="{:>4d}",
-                   done_char="-", wait_char=" ") :
+                   pencent_format="{:>5.1%}", value_format="{:>5d}",
+                   done_char="=", wait_char=" ") :
     """ Display a progress bar in line, and overwrite it on next display
     """
     pcnt = (float(value) - v_from) / (v_to - v_from)
