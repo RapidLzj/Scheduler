@@ -24,9 +24,10 @@ def check ( filelist, checklist ) :
         info = headerinfo.headerinfo(f.strip())
         if info != None :
             clst.append(info)
+            break
 
-    chkfmt = ("{filesn:0>4d} {imagetype:8s} {object:10s} {filter:8s} {exptime:>5.1f} " +
-              "{ra:>9.5f} {dec:>+9.5f} {filename}\n").format
+    chkfmt = ("{[filesn]:0>4d} {[imagetype]:8s} {[object]:10s} {[filter]:8s} {[exptime]:>5.1f} " +
+              "{[ra]:>9.5f} {[dec]:>+9.5f} {[filename]}\n").format
     f = open(checklist, "w")
     for c in clst :
         f.write(chkfmt(c))
