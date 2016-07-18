@@ -20,10 +20,14 @@ def check ( filelist, checklist ) :
 
     flst = open(filelist, "r").readlines()
     clst = []
+    c, i = len(flst), 0
     for f in flst :
+        i += 1
+        util.progress_bar(i, c)
         info = headerinfo.headerinfo(f.strip())
         if info != None :
             clst.append(info)
+    print ("\n")
 
     chkfmt = ("{0[filesn]:0>4d} {0[imagetype]:8s} {0[object]:10s} {0[filter]:8s} {0[exptime]:>5.1f} " +
               "{0[ra]:>9.5f} {0[dec]:>+9.5f} {0[filename]}\n").format
