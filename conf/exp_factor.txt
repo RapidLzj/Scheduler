@@ -1,4 +1,0 @@
-#Filter ExpT Code Factor
-strumu   60    0    1.0
-strumu   50    0    1.0
-strumu   40    0    1.0

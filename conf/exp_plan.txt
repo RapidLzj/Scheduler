@@ -1,2 +1,0 @@
-#Code Filter ExpT Repeat  Factor  Dither Name
-    0 strumu   60      1     1.0  0      u60
