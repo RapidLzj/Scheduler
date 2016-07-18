@@ -26,8 +26,8 @@ def check ( filelist, checklist ) :
             clst.append(info)
             break
 
-    chkfmt = ("{[filesn]:0>4d} {[imagetype]:8s} {[object]:10s} {[filter]:8s} {[exptime]:>5.1f} " +
-              "{[ra]:>9.5f} {[dec]:>+9.5f} {[filename]}\n").format
+    chkfmt = ("{0[filesn]:0>4d} {0[imagetype]:8s} {0[object]:10s} {0[filter]:8s} {0[exptime]:>5.1f} " +
+              "{0[ra]:>9.5f} {0[dec]:>+9.5f} {0[filename]}\n").format
     f = open(checklist, "w")
     for c in clst :
         f.write(chkfmt(c))
