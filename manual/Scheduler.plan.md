@@ -6,13 +6,17 @@
 
 ## Files and directories structure
 
-All angle in degrees.
+###Basic File Rules:
+
+All angle in degrees, except ra/dec in observation list, it depends on telescope need, usually in sexagesimal hms/dms mode.
 
 RunCode rule: in most case, use the month of the run starts, format yyyymm. If there are more runs in same month, add postfix A, B, or C.
 
 Date rule: use extra modified Julian day, emjd = jd - 2450000.5, for observing, use the jd of local 18:00. In following, use `jdddd` to present leading `j` and 4-digit julian day.
 
 Time rule: in most case, use hhmmss format time. In some case, will use decimal format, use `tttt` or `ttttt` to present.
+
+Column seperator: if not specified, use space to seperate, First column left aligned, others right aligned for numerical and left or right for string.
 
 * `/`
     + `programs`
@@ -21,24 +25,24 @@ Time rule: in most case, use hhmmss format time. In some case, will use decimal 
 
 * `/tel/conf/`
     + `basic.txt` site and telescope basic data, longitude, latitude, altitude, timezone, exposure accessory time, field of view. Each datum in one line.
-    + `field.txt` list of all fields, col: field ra dec gb gl. Note: field id is **NOT** continual int, some will be skipped for future use.
+    + `field.txt` list of all fields, col: field, ra, dec, gl, gb. Note: field id is **NOT** continual int, some will be skipped for future use.
     + `block.txt` list of all blocks, col: block field list(up to 7)
     + `expplan.txt` plan of exposures, col: code filter expt repeat
     + `expfactor.txt` factors of exp, col: filter expt code factor, use filter+expt to locate code and factor sum factor to check finished or not
     + `dither.txt` dither between exposures of the same filter
 
 * `/tel/obsed/yyyymm/` usually runcode is yyyymm, but can be others
-    + `files.jdddd.lst` daily file list, only good files, col: full filename
-    + `check.jdddd.lst` daily check list, col: filename filesn field filter expt
+    + `files.Jdddd.lst` daily file list, only good files, col: full filename
+    + `check.Jdddd.lst` daily check list, col: filesn, imagetype, field/object, filter, exptime, ra, dec, filename
     + `obsed.lst` finished list of this run, col: field factorlist (by code)
-    + `obsed.jddddtttt.bak` backup of finished list, `ddddtttt` is the backup time
+    + `obsed.Jddddtttt.bak` backup of finished list, `ddddtttt` is the backup time
 
 * `/tel/schedule/runcode/jdddd/`
-    + `plan.jdddd.txt` merged plan of this day
-    + `note.jdddd.txt` note for plan. including field no, ra, dec, filter and exposure time, extra info including planned obsed time, alt and az, airmass, moon distance, alt and phase(even if moon is not visible), 
+    + `plan.Jdddd.txt` merged plan of this day
+    + `note.Jdddd.txt` note for plan. including field no, ra, dec, filter and exposure time, extra info including planned obsed time, alt and az, airmass, moon distance, alt and phase(even if moon is not visible), 
     + `snn.nnnnnn.txt` plan of one block, block sn, from 01, and block id
     + `snn.check.txt` check for choose one block, 
-    + `plan.jdddd.eps` footprint of finished and planed fields, color legend: black point(k,) planed but not observed (all fields will be displayed, blue dot(b.) obsed before last night, yellow dot(y.) obsed last night, red cross(rx) plan for this night.
+    + `plan.Jdddd.eps` footprint of finished and planed fields, color legend: black point(k,) planed but not observed (all fields will be displayed, blue dot(b.) obsed before last night, yellow dot(y.) obsed last night, red cross(rx) plan for this night.
 
 ## Programs
 
@@ -70,7 +74,7 @@ Extract info from fits file header, use this to adapt to different telescope.
 
 ##### param
 + filename: full filename
-+ return: tuple of file header info: filesn, object, filter, exposure time, ra, dec
++ return: dict of file header info: filename, filesn, image/object type, object, filter, exposure time, ra (deg), dec (deg)
 
 ### planner
 
