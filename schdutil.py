@@ -39,8 +39,8 @@ class plan_info :
         return x
 
     def __repr__ ( self ) :
-        return "{s.code:<2d} {s.name:>10s} {s.filter:>8s} {s.expt:>5.1f} " + \
-               "{s.repeat:>2d} {s.factor:>3.1f} {s.dither1:>5.1f} {s.dither2:>5.1f}".format(s=self)
+        return ("{s.code:<2d} {s.name:>10s} {s.filter:>8s} {s.expt:>5.1f} " +
+                "{s.repeat:>2d} {s.factor:>3.1f} {s.dither1:>5.1f} {s.dither2:>5.1f}").format(s=self)
 
 class mode_info :
     """ A structure like class, holding info of mode
@@ -98,8 +98,8 @@ class check_info :
         return "{m.filter}_{m.expt:0>5.1f}".format(m=self)
 
     def __repr__ ( self ) :
-        return "{s.filesn:0>4d} {s.imgtyp:>8s} {s.object:>10s} {s.filter:>8s} {s.expt:>5.1f} " + \
-               "{s.radeg:>9.5f} {s.decdeg:>+9.5f} {s.fitsfile}".format(s=self)
+        return ("{s.filesn:0>4d} {s.imgtyp:>8s} {s.object:>10s} {s.filter:>8s} {s.expt:>5.1f} " +
+                "{s.radeg:>9.5f} {s.decdeg:>+9.5f} {s.fitsfile}").format(s=self)
 
 ####################################################################################################
 
