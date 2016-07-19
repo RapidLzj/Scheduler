@@ -11,30 +11,36 @@ import util
 import headerinfo
 
 
-def check ( filelist, checklist ) :
+def check ( tel, runcode, day ) :
+    """
+    """
+    # input and output filename
+    filelist = "{tel}/obsed/{runcode}/files.J{day:0>4d}.lst".format(tel=tel, runcode=runcode, day=day)
+    chklist  = "{tel}/obsed/{runcode}/check.J{day:0>4d}.lst".format(tel=tel, runcode=runcode, day=day)
+
     if not os.path.isfile(filelist) :
         print ("List file NOT exists: \'{0}\'".format(filelist))
         return
 
+    # load file info
     flst = open(filelist, "r").readlines()
     clst = []
-    c, i = len(flst), 0
+    fcnt, i = len(flst), 0
     for f in flst :
         i += 1
-        util.progress_bar(i, c)
+        util.progress_bar(i, fcnt)
         info = headerinfo.headerinfo(f.strip())
         if info != None :
             clst.append(info)
     print ("\n")
 
-    chkfmt = ("{0[filesn]:0>4d} {0[imagetype]:8s} {0[object]:10s} {0[filter]:8s} {0[exptime]:>5.1f} " +
-              "{0[ra]:>9.5f} {0[dec]:>+9.5f} {0[filename]}\n").format
-    f = open(checklist, "w")
+    # output check list
+    f = open(chklist, "w")
     for c in clst :
-        f.write(chkfmt(c))
+        f.write("{}\n".format(c))
     f.close()
 
-    print ("Successfully check {0} files from \'{1}\'.".format(len(clst), filelist))
+    print ("Successfully check {0} files from `{1}`.".format(len(clst), filelist))
 
 
 if __name__ =="__main__" :

@@ -1,13 +1,16 @@
 """
     Module util
-    Utilities for Scripts
+    Utilities for common routine, can also be used in other task
     v1.0 : By Jie Zheng, 201607, Tucson, AZ, USA
 
     Providing:
         hms/dms to and from decimal
         sxpar, get value from fits header
+        progress bar
+        readconf, read configure file, remove comment and empty lines
 """
 
+import os
 import sys
 
 
@@ -57,6 +60,8 @@ def sxpar ( header, key, default=None ) :
     """
     if key in header.keys() :
         v = header[key]
+        if v == "" :
+            v = default
     else :
         v = default
     return v
@@ -77,4 +82,21 @@ def progress_bar ( value, v_to = 100, v_from = 0, length=80,
     fmt = (percent_format + " [{}{}] " + value_format + "\r").format
     sys.stdout.write(fmt(pcnt, done_str, wait_str, value))
     sys.stdout.flush()
+
+def read_conf ( conffile, default=None ) :
+    """ Read configure file, and remove comments, empty lines
+    """
+    if os.path.isfile(conffile) :
+        lines = open(conffile,"r").readlines()
+    else :
+        lines = default
+
+    outlines = []
+    for l in lines :
+        k = l.split("#")[0].strip()
+        if k != "" :
+            outlines.append(k)
+
+    return outlines
+
 

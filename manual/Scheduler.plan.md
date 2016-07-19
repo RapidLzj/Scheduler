@@ -24,18 +24,17 @@ Column seperator: if not specified, use space to seperate, First column left ali
 * `/tel/` telescope name brief, currently we have `bok` and `xao`
 
 * `/tel/conf/`
-    + `basic.txt` site and telescope basic data, longitude, latitude, altitude, timezone, exposure accessory time, field of view. Each datum in one line.
+    + `basic.txt` site and telescope basic data, longitude, latitude, altitude, timezone, exposure accessory time, field of view.
     + `field.txt` list of all fields, col: field, ra, dec, gl, gb. Note: field id is **NOT** continual int, some will be skipped for future use.
     + `block.txt` list of all blocks, col: block field list(up to 7)
-    + `expplan.txt` plan of exposures, col: code filter expt repeat
-    + `expfactor.txt` factors of exp, col: filter expt code factor, use filter+expt to locate code and factor sum factor to check finished or not
-    + `dither.txt` dither between exposures of the same filter
+    + `expplan.txt` plan of exposures, col: code name filter expt repeat factor dither1 dither2
+    + `expmode.txt` mode of exposures, col: filter expt code factor, use filter+expt to locate code and factor sum factor to check finished or not. Mode is a connection between real exposure and exposure plan.
 
 * `/tel/obsed/yyyymm/` usually runcode is yyyymm, but can be others
     + `files.Jdddd.lst` daily file list, only good files, col: full filename
     + `check.Jdddd.lst` daily check list, col: filesn, imagetype, field/object, filter, exptime, ra, dec, filename
     + `obsed.lst` finished list of this run, col: field factorlist (by code)
-    + `obsed.Jddddtttt.bak` backup of finished list, `ddddtttt` is the backup time
+    + `obsed.yyyymmddhhmmss.bak` backup of finished list, `yyyymmddhhmmss` is the backup time
 
 * `/tel/schedule/runcode/jdddd/`
     + `plan.Jdddd.txt` merged plan of this day
@@ -57,6 +56,7 @@ Use `ls` to generage a file list: `/tel/obsed/runcode/files.xxx.lst`.
 Check file header info, from `files.xxx.lst` to `/tel/obsed/runcode/check.xxx.lst`.
 
 ##### param
++ tel: string, telescope brief
 + runcode: string, yyyymm
 + day: 4-digit mjd of the night
 
@@ -65,8 +65,8 @@ Check file header info, from `files.xxx.lst` to `/tel/obsed/runcode/check.xxx.ls
 Collect file info from daily check list and generate obsed list.
 
 ##### param
++ tel: string, telescope brief
 + runcode: string, yyyymm
-+ day: 4-digit mjd of the night
  
 ### headerinfo
 
@@ -81,6 +81,7 @@ Extract info from fits file header, use this to adapt to different telescope.
 Make plan of each day.
 
 ##### param
++ tel: string, telescope brief
 + runcode, string, yyyymm
 + day: 4-digit mjd
 
@@ -97,4 +98,24 @@ Make plan of each day.
 8. Get new "current" time, if before dawn, goto 4
 9. Ending work
 
+### util
 
+Utilities for common usage.
+
+##### function
++ dms2dec
++ hmd2dec
++ dec2hms
++ dec2dms
++ sxpar
++ progress_bar
++ read_conf
+
+### schdutil
+
+Utilities for scheduler.
+
+##### function
++ load_expplan
++ load_expmode
++ 
