@@ -71,20 +71,20 @@ class mode_info :
 class check_info :
     """ A structure like class, holding info of check
     """
-    def __init__ ( self, fitsfile, filesn, imgtyp, object, filter, expt, radeg, decdeg ) :
+    def __init__ ( self, fitsfile, filesn, imgtyp, object, filter, expt, ra, de ) :
         self.fitsfile = fitsfile
         self.filesn = filesn
         self.imgtyp = imgtyp
         self.object = object
         self.filter = filter
         self.expt   = expt
-        self.radeg  = radeg
-        self.decdeg = decdeg
+        self.ra     = ra
+        self.de     = de
 
     @staticmethod
     def parse ( line ) :
         """ Parse a new instance from line, columns seperated by space
-        Col: filesn, imgtyp, object, filter, expt, radeg, decdeg, fitsfile
+        Col: filesn, imgtyp, object, filter, expt, ra, de, fitsfile
         NOTE: different to init, fitefilename is the last in text
         """
         pp = line.split()
@@ -99,7 +99,35 @@ class check_info :
 
     def __repr__ ( self ) :
         return ("{s.filesn:0>4d} {s.imgtyp:>8s} {s.object:>10s} {s.filter:>8s} {s.expt:>5.1f} " +
-                "{s.radeg:>9.5f} {s.decdeg:>+9.5f} {s.fitsfile}").format(s=self)
+                "{s.ra:>9.5f} {s.de:>+9.5f} {s.fitsfile}").format(s=self)
+
+class field_info :
+    """ A structure like class, holding info of field
+    """
+    def __init__ ( self, id, ra, de, gl, gb ) :
+        self.id = id
+        self.gl = gl
+        self.gb = gb
+        self.ra = ra
+        self.de = de
+
+    @staticmethod
+    def parse ( line ) :
+        """ Parse a new instance from line, columns seperated by space
+        Col: id, ra, dec, gl, gb
+        """
+        pp = line.split()
+        x = field_info(int(pp[0]), float(pp[1]), float(pp[2]), float(pp[3]), float(pp[4]))
+        return x
+
+    def mode ( self ) :
+        """ Return the mode id string, consists of filter and expt
+        """
+        return "{m.filter}_{m.expt:0>5.1f}".format(m=self)
+
+    def __repr__ ( self ) :
+        return ("{s.id:<5d}  {s.ra:>9.5f} {s.de:>+9.5f}  {s.gl:>9.5f} {s.gb:>+9.5f}").format(s=self)
+
 
 ####################################################################################################
 
@@ -114,8 +142,8 @@ def load_expplan ( tel ) :
 
     plans = {}
     for line in planlines :
-        pl = plan_info.parse(line)
-        plans[pl.code] = pl
+        a = plan_info.parse(line)
+        plans[a.code] = a
 
     return plans
 
@@ -131,9 +159,27 @@ def load_expmode ( tel ) :
 
     modes = {}
     for line in modelines :
-        ml = mode_info.parse(line)
-        mcode = "{m.filter}_{m.expt:0>5.1f}".format(m=ml)
-        modes[mcode] = ml
+        a = mode_info.parse(line)
+        modes[a.mode()] = a
 
     return modes
 
+def load_field ( tel ) :
+    """ Load field definition from conf file
+    return: dict of fields, key is field id, value is a field
+    a field is a instance of class field_info
+    """
+    expmodefile = "{tel}/conf/field.txt".format(tel=tel)
+    fieldlines = util.read_conf(expmodefile, default=None)
+
+    fields = {}
+    for line in fieldlines :
+        a = field_info.parse(line)
+        fields[a.id] = a
+
+    return fields
+
+def ls_files ( wildcard ) :
+    """ Execute a ls command with wildcard, and return file list
+    """
+    return [f.strip() for f in os.popen("ls " + wildcard).readlines()]

@@ -33,17 +33,17 @@ def headerinfo ( fitsfile ) :
         object = util.sxpar(prihdr, "OBJECT", "unknown")
         filter = util.sxpar(prihdr, "FILTER", "unknown")
         expt   = float(util.sxpar(prihdr, "EXPTIME", 0.0))
-        radeg  = util.hms2dec(util.sxpar(prihdr, "RA", "0"))
-        decdeg = util.dms2dec(util.sxpar(prihdr, "DEC", "0"))
+        ra  = util.hms2dec(util.sxpar(prihdr, "RA", "0"))
+        de = util.dms2dec(util.sxpar(prihdr, "DEC", "0"))
         #res = {"filename": fitsfile,
         #       "filesn": filesn,
         #       "imagetype": imgtyp,
         #       "object": object,
         #       "filter": filter,
         #       "exptime": expt,
-        #       "ra": radeg,
-        #       "dec": decdeg }
-        res = schdutil.check_info(fitsfile, filesn, imgtyp, object, filter, expt, radeg, decdeg)
+        #       "ra": ra,
+        #       "dec": de }
+        res = schdutil.check_info(fitsfile, filesn, imgtyp, object, filter, expt, ra, de)
 
     elif telescope == "1M-WideField" :
         filesn = int(fitsfile[-9:-5])
@@ -51,17 +51,17 @@ def headerinfo ( fitsfile ) :
         object = util.sxpar(prihdr, "OBJECT", "unknown")
         filter = util.sxpar(prihdr, "FILTER", "unknown")
         expt   = float(util.sxpar(prihdr, "EXPTIME", 0.0))
-        radeg  = float(util.sxpar(prihdr, "OBJCTRA", 0.0))
-        decdeg = float(util.sxpar(prihdr, "OBJCTDEC", 0.0))
+        ra  = float(util.sxpar(prihdr, "OBJCTRA", 0.0))
+        de = float(util.sxpar(prihdr, "OBJCTDEC", 0.0))
         #res = {"filename": fitsfile,
         #       "filesn": filesn,
         #       "imagetype": imgtyp,
         #       "object": object,
         #       "filter": filter,
         #       "exptime": expt,
-        #       "ra": radeg,
-        #       "dec": decdeg }
-        res = schdutil.check_info(fitsfile, filesn, imgtyp, object, filter, expt, radeg, decdeg)
+        #       "ra": ra,
+        #       "dec": de }
+        res = schdutil.check_info(fitsfile, filesn, imgtyp, object, filter, expt, ra, de)
 
     else :
         res = None

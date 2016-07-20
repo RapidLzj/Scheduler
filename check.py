@@ -7,19 +7,20 @@
 
 
 import os
+import sys
 import util
 import headerinfo
 
 
-def check ( tel, runcode, day ) :
+def check ( tel, run, day ) :
     """
     """
     # input and output filename
-    filelist = "{tel}/obsed/{runcode}/files.J{day:0>4d}.lst".format(tel=tel, runcode=runcode, day=day)
-    chklist  = "{tel}/obsed/{runcode}/check.J{day:0>4d}.lst".format(tel=tel, runcode=runcode, day=day)
+    filelist = "{tel}/obsed/{run}/files.J{day:0>4d}.lst".format(tel=tel, run=run, day=day)
+    chklist  = "{tel}/obsed/{run}/check.J{day:0>4d}.lst".format(tel=tel, run=run, day=day)
 
     if not os.path.isfile(filelist) :
-        print ("List file NOT exists: \'{0}\'".format(filelist))
+        print ("ERROR!! File list NOT exists: \'{0}\'".format(filelist))
         return
 
     # load file info
@@ -40,8 +41,17 @@ def check ( tel, runcode, day ) :
         f.write("{}\n".format(c))
     f.close()
 
-    print ("Successfully check {0} files from `{1}`.".format(len(clst), filelist))
+    print ("Check OK! {0} files from `{1}`.".format(len(clst), filelist))
 
 
 if __name__ =="__main__" :
-    pass
+    argv = sys.argv
+    if len(sys.argv) < 4 :
+        print ("""Syntax:
+    python check.py tel run day
+        tel: 3 letter code of telescope, we now have bok and xao
+        run: code of run, usually as yyyymm format
+        day: modified Julian day of the date, 4 digit, JD-2450000.5
+    """)
+    else :
+        check ( sys.argv[1], sys.argv[2], int(sys.argv[3]))

@@ -7,21 +7,22 @@
 
 
 import os
+import sys
 import time
 import util
 import schdutil
 
 
-def collect ( tel, runcode ) :
+def collect ( tel, run, day ) :
     """
     """
     # search check filenames
-    obsedpath = "{tel}/obsed/{runcode}/".format(tel=tel, runcode=runcode)
-    if not os.path.isdir(obsedpath) :
-        print ("ERROR: `{}` does NOT exists".format(obsedpath))
-    chkfiles = [obsedpath + f
-                for f in os.listdir(obsedpath)
-                if f.startswith("check.J") and f.endswith(".lst") and os.path.isfile(obsedpath+f)]
+    checklist  = "{tel}/obsed/{run}/check.J{day:0>4d}.lst".format(tel=tel, run=run, day=day)
+    obsedlist  = "{tel}/obsed/{run}/obsed.J{day:0>4d}.lst".format(tel=tel, run=run, day=day)
+
+    if not os.path.isfile(checklist) :
+        print ("ERROR!! Check list NOT exists: \'{0}\'".format(checklist))
+        return
 
     # load configure file
     plans = schdutil.load_expplan(tel)
@@ -29,24 +30,21 @@ def collect ( tel, runcode ) :
 
     # load check files
     chk = []
-    for cf in chkfiles :
-        lines = open(cf, "r").readlines()
-        for line in lines :
-            c = schdutil.check_info.parse(line)
-            #pp = line.split() #filesn imagetype object filter exptime ra dec filename
-            #c = {"filesn":int(pp[0]), "imagetype":pp[1], "object":pp[2],
-            #     "filter":pp[3], "expt":float(pp[4]),
-            #     "ra":float(pp[5]), "dec":float(pp[6]), "filename":pp[7]}
-            # check mode, code, and factor
-            mode = c.mode()
-            c.mode = mode
-            if mode in modes :
-                c.code = modes[mode].code
-                c.factor = modes[mode].factor
-            else :
-                c.code = -1
-                c.factor = 0.0
-            chk.append(c)
+    lines = open(checklist, "r").readlines()
+    for line in lines :
+        c = schdutil.check_info.parse(line)
+        mode = c.mode()
+        c.mode = mode
+        if mode in modes :
+            c.code = modes[mode].code
+            c.factor = modes[mode].factor
+        else :
+            c.code = -1
+            c.factor = 0.0
+        # remove tailing "x", which means dithered
+        if c.object.endswith("x") :
+            c.object = c.object[0:-1]
+        chk.append(c)
 
     # init a empty 2-d dict `objs`, keys: obj name, plan code
     # use dict to provide an array with easy index
@@ -63,27 +61,30 @@ def collect ( tel, runcode ) :
         objmap[c.object][c.code] += c.factor
 
     # output obsed file
-    obsedlst = obsedpath + "obsed.lst"
-    if os.path.isfile(obsedlst) :
-        obsedbak = obsedpath + "obsed." + time.strftime("%Y%m%d%H%M%S") + ".bak"
-        os.rename(obsedlst, obsedbak)
-        print ("Current list backup to `{}`".format(obsedbak))
-
-    f = open(obsedlst, "w")
-    f.write("# Generated at {}\n".format(time.strftime("%Y-%m-%d %H:%M:%S")))
+    # get an fixed order, so no random between different system
+    plancode = plans.keys()
+    plancode.sort()
+    f = open(obsedlist, "w")
     f.write("#{:<11s}".format("Object"))
-    for p in plans :
+    for p in plancode :
         f.write(" {:>4s}".format(plans[p].name[0:4]))
     f.write("\n\n")
     for o in objmap :
         ot = "{:<12s}".format(o)
-        ft = ["{:>4.1f}".format(objmap[o][c]) for c in objmap[o] if c >= 0]
+        ft = ["{:>4.1f}".format(objmap[o][p]) for p in plancode]
         tt = ot + " " + " ".join(ft) + "\n"
         f.write(tt)
     f.close()
 
-    print ("Successfully collect {1} objects from {0} files of run `{2}-{3}`.".format(
-        len(chkfiles), len(objmap), tel, runcode))
+    print ("Collect OK! {0} objects from `{1}`.".format(len(objmap), checklist))
 
 if __name__ =="__main__" :
-    collect("bok","201603B")
+    if len(sys.argv) < 4 :
+        print ("""Syntax:
+    python collect.py tel run day
+        tel: 3 letter code of telescope, we now have bok and xao
+        run: code of run, usually as yyyymm format
+        day: modified Julian day of the date, 4 digit, JD-2450000.5
+    """)
+    else :
+        collect ( sys.argv[1], sys.argv[2], int(sys.argv[3]))

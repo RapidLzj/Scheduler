@@ -33,8 +33,7 @@ Column seperator: if not specified, use space to seperate, First column left ali
 * `/tel/obsed/yyyymm/` usually runcode is yyyymm, but can be others
     + `files.Jdddd.lst` daily file list, only good files, col: full filename
     + `check.Jdddd.lst` daily check list, col: filesn, imagetype, field/object, filter, exptime, ra, dec, filename
-    + `obsed.lst` finished list of this run, col: field factorlist (by code)
-    + `obsed.yyyymmddhhmmss.bak` backup of finished list, `yyyymmddhhmmss` is the backup time
+    + `obsed.Jdddd.lst` finished list of the day, col: field factorlist (by code)
 
 * `/tel/schedule/runcode/jdddd/`
     + `plan.Jdddd.txt` merged plan of this day
@@ -53,37 +52,52 @@ Use `ls` to generage a file list: `/tel/obsed/runcode/files.xxx.lst`.
 
 ### check
 
-Check file header info, from `files.xxx.lst` to `/tel/obsed/runcode/check.xxx.lst`.
+Check file header info, from `files.xxx.lst` to `/tel/obsed/runcode/check.xxx.lst`, and `tel/obsed/runcode/obsed.xxx.lst`.
 
 ##### param
-+ tel: string, telescope brief
-+ runcode: string, yyyymm
-+ day: 4-digit mjd of the night
++ `tel`: string, telescope brief
++ `runcode`: string, yyyymm
++ `day`: 4-digit mjd of the night
 
 ### collect
 
-Collect file info from daily check list and generate obsed list.
+Collect file info from daily check list and generate daily obsed list.
 
 ##### param
-+ tel: string, telescope brief
-+ runcode: string, yyyymm
++ `tel`: string, telescope brief
++ `runcode`: string, yyyymm
++ `day`: 4-digit mjd of the night
+
+*Divide check and collect into 2 steps, so we can `check` on server and then `collect` in any machine without fits. If we altered plan or mode, we do not need to scan fits again.*
  
 ### headerinfo
 
 Extract info from fits file header, use this to adapt to different telescope.
 
 ##### param
-+ filename: full filename
-+ return: dict of file header info: filename, filesn, image/object type, object, filter, exposure time, ra (deg), dec (deg)
++ `filename`: full filename
++ `return`: instance of file header info: filename, filesn, image/object type, object, filter, exposure time, ra (deg), dec (deg)
+
+### footprint
+
+Plot footprint map from obsed data, on a mollweide projected sky.
+
+##### param
++ `tel`: telescope, must provide
++ `outfile`: specified output figure filename, if not specified, use current time as filename, and use eps format
++ `runcode`: optional, if specified, only draw this run, else draw all
++ `day`: optional, if provided, only draw this day. If without runcode, this is ommitted
++ `plancode`: specified which plan to be drawn, if not, all plan
++ `colors`: optional, a dict of runcode to color, else use system color
 
 ### planner
 
 Make plan of each day.
 
 ##### param
-+ tel: string, telescope brief
-+ runcode, string, yyyymm
-+ day: 4-digit mjd
++ `tel`: string, telescope brief
++ `runcode`, string, yyyymm
++ `day`: 4-digit mjd
 
 1. Load all blocks and fields
 2. Load finished fields
@@ -118,4 +132,6 @@ Utilities for scheduler.
 ##### function
 + load_expplan
 + load_expmode
-+ 
++ class plan_info
++ class mode_info
++ class check_info
