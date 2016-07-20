@@ -93,15 +93,16 @@ def footprint ( tel, reportfile=None, equfile=None, galfile=None,
             fields[f].tag = 0 if fsum == 0.0 else 1 if msum == 0.0 else 2
 
     # generate a text report
-    rep = open(reportfile, "w")
-    for f in fields.values() :
-        rep.write(("{0}  {1:1d} ").format(f, f.tag))
-        for p in plancode :
-            rep.write(" {:>4.1f}".format(f.factor[p]))
-        for p in plancode :
-            rep.write(" {:>4.1f}".format(f.mark[p]))
-        rep.write("\n")
-    rep.close()
+    if reportfile != "" :
+        rep = open(reportfile, "w")
+        for f in fields.values() :
+            rep.write(("{0}  {1:1d} ").format(f, f.tag))
+            for p in plancode :
+                rep.write(" {:>4.1f}".format(f.factor[p]))
+            for p in plancode :
+                rep.write(" {:>4.1f}".format(f.mark[p]))
+            rep.write("\n")
+        rep.close()
 
     # draw Equatorial System
     plt.rcParams['figure.figsize'] = 16,10
@@ -122,28 +123,29 @@ def footprint ( tel, reportfile=None, equfile=None, galfile=None,
     gb2 = [f.gb for f in fields.values() if f.tag == 2]
     n2 = len(ra2)
 
-    equf = moll(lat_range=(-5,85))
-    equf.grid(lat_lab_lon=0, lon_lab_lat=-5, lat_step=10)
-    equf.scatter(ra0, de0, "k,", label="Future {}".format(n0))
-    equf.scatter(ra1, de1, "b.", label="Done {}".format(n1+n2))
-    if marktext != None :
-        equf.scatter(ra2, de2, "r.", label="{} {}".format(marktext, n2))
-    plt.legend()
-    plt.title("{tel} {plan} Footprint in Equatorial System".format(tel=tel, plan=planname))
-    plt.savefig(equfile)
-    plt.close()
+    if equfile != "" :
+        equf = moll(lat_range=(-5,85))
+        equf.grid(lat_lab_lon=0, lon_lab_lat=-5, lat_step=10)
+        equf.scatter(ra0, de0, "k,", label="Future {}".format(n0))
+        equf.scatter(ra1, de1, "b.", label="Done {}".format(n1+n2))
+        if marktext != None :
+            equf.scatter(ra2, de2, "r.", label="{} {}".format(marktext, n2))
+        plt.legend()
+        plt.title("{tel} {plan} Footprint in Equatorial System".format(tel=tel, plan=planname))
+        plt.savefig(equfile)
+        plt.close()
 
-
-    galf = moll()
-    galf.grid(lat_lab_lon=0, lon_lab_lat=-5)
-    galf.scatter(gl0, gb0, "k,", label="Future {}".format(n0))
-    galf.scatter(gl1, gb1, "b.", label="Done {}".format(n1+n2))
-    if marktext != None :
-        galf.scatter(gl2, gb2, "r.", label="{} {}".format(marktext, n2))
-    plt.legend()
-    plt.title("{tel} {plan} Footprint in Galactic System".format(tel=tel, plan=planname))
-    plt.savefig(galfile)
-    plt.close()
+    if galfile != "" :
+        galf = moll()
+        galf.grid(lat_lab_lon=0, lon_lab_lat=-5)
+        galf.scatter(gl0, gb0, "k,", label="Future {}".format(n0))
+        galf.scatter(gl1, gb1, "b.", label="Done {}".format(n1+n2))
+        if marktext != None :
+            galf.scatter(gl2, gb2, "r.", label="{} {}".format(marktext, n2))
+        plt.legend()
+        plt.title("{tel} {plan} Footprint in Galactic System".format(tel=tel, plan=planname))
+        plt.savefig(galfile)
+        plt.close()
 
 
 if __name__ =="__main__" :

@@ -80,15 +80,17 @@ Extract info from fits file header, use this to adapt to different telescope.
 
 ### footprint
 
-Plot footprint map from obsed data, on a mollweide projected sky.
+Plot footprint map from obsed data, on a mollweide projected sky. It will generate a text report and two figure, in Equatorial and Galactic system. If specified run or day, then fields in the run or day will be red. If `before` set true, will obly draw fields before it.
 
 ##### param
 + `tel`: telescope, must provide
-+ `outfile`: specified output figure filename, if not specified, use current time as filename, and use eps format
++ `reportfile`: text report filename. If not given, use current date and time. If given empty string, will not generate this report. Same rule for `equfile` and `galfile`.
++ `equfile`: filename of footprint in Equatorial system
++ `galfile`: filename of footprint in Galactic system
 + `runcode`: optional, if specified, only draw this run, else draw all
 + `day`: optional, if provided, only draw this day. If without runcode, this is ommitted
-+ `plancode`: specified which plan to be drawn, if not, all plan
-+ `colors`: optional, a dict of runcode to color, else use system color
++ `plan`: specified which plan to be drawn, if not, all plan
++ `before`: optional, if set True, will only draw fields before specified day or run
 
 ### planner
 
