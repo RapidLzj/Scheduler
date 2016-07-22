@@ -1,0 +1,12 @@
+This is final version of fields for Bok
+
+field.old.txt : old version, with all fields
+field.bare.txt: final version, spring and summer removed, 17728 fields, without block
+field.txt     : final version with blockname
+
+Files in `trial` are versions of old data or trial data, keep for tracking.
+
+Generate by awk:
+awk '{if ($5 < 0 || $2 < 185 || $3 >= 80) {print $0}}' field.old.txt > field.bare.txt
+
+On 2016-07-20

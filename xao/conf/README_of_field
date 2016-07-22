@@ -1,0 +1,12 @@
+This is final version of xao fields
+
+field.bare.txt : final chosen fields for 2016, remove sdss area and spring&summer,
+                 tag:2&3, total 4254 fields
+field.txt      : final version with blockname, no tag
+
+field.tag.txt : all old fields with tag
+tag: 1 SDSS+THIS- *2 SDSS-THIS+ *3 SDSS+THIS+ 4 SDSS+S&S- 5 SDSS-S&S+ 6 SDSS+S&S+
+
+This version completed on 2016-07-14, using nowt_new/Plot_new_nowt_0713.ipynb
+
+Files in directory `trial` are trial in setting up, now not used.

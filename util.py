@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
     Module util
     Utilities for common routine, can also be used in other task
@@ -16,6 +17,10 @@ import sys
 
 def dms2dec ( dms ) :
     """ Transform deg:min:sec format angle to decimal format
+    args:
+        dms: sexagesimal angle string, format +/-dd:mm:ss.xxx
+    returns:
+        decimal angle in degree
     """
     pp = dms.split(":")
     if len(pp) >= 3 :
@@ -34,29 +39,51 @@ def dms2dec ( dms ) :
 
 def hms2dec ( hms ) :
     """ Transform hour:min:sec format angle to decimal format
+    args:
+        hms: sexagesimal angle string, format hh:mm:ss.xxx
+    returns:
+        decimal angle in degree
     """
     dec = dms2dec(hms) * 15.0
     return dec
 
 def dec2dms ( dec, len=11 ) :
     """ Transform decimal format angle to deg:min:sec format
+    args:
+        dec: decimal angle in degree
+        len: output length of string
+    returns:
+        sexagesimal angle string, format +/-dd:mm:ss.xxx
     """
-    pm = "-" if dec < 0.0 else "+"
-    adec = abs(dec)
+    dec0 = dec % 360.0 if dec >= 0.0 else dec % -360.0
+    pm = "-" if dec0 < 0.0 else "+"
+    adec = abs(dec0)
     dd = int(adec)
     mm = int((adec - dd) * 60.0)
     ss = (adec - dd) * 3600 - mm * 60.0
-    dms = "{0:1s}{1:0>2d}:{2:0>2d}:{3:0>7.4f}".format(pm, dd, mm, ss)
+    dms = "{0:1s}{1:02d}:{2:02d}:{3:07.4f}".format(pm, dd, mm, ss)
     return dms[0:len]
 
 def dec2hms ( dec, len=11 ) :
     """ Transform decimal format angle to deg:min:sec format
+    args:
+        dec: decimal angle in degree
+        len: output length of string
+    returns:
+        sexagesimal angle string, format hh:mm:ss.xxx
     """
-    hms = dec2dms(dec/15.0, len+1)
+    dec0 = dec % 360.0
+    hms = dec2dms(dec0/15.0, len+1)
     return hms[1:]
 
 def sxpar ( header, key, default=None ) :
     """ Check weather the key is in header, if yes, return value, else return default
+    args:
+        header: fits head, get from hdulist[x].header
+        key: key of the card you want to visit
+        default: default value if key not in header, and if key exists, but value is empty
+    returns:
+        value of key, if not exists or empty, return default value
     """
     if key in header.keys() :
         v = header[key]
@@ -70,6 +97,15 @@ def progress_bar ( value, v_to = 100, v_from = 0, length=80,
                    percent_format="{:>6.1%}", value_format="{:>5d}",
                    done_char="=", wait_char=" ") :
     """ Display a progress bar in line, and overwrite it on next display
+    args:
+        value: progress bar position value
+        v_to: right end value of progress bar
+        v_from: left end value of progress bar
+        length: length of progress bar body, between []
+        percent_format: format of percent display, set None to suppress diaplay
+        value_format: format of value displan, set None to suppress display
+        done_char: char of done part of progress bar, left part
+        wait_char: char of waiting part of progress bar, right part
     """
     pcnt = (float(value) - v_from) / (v_to - v_from)
     pcnt = 0.0 if pcnt < 0.0 else 1.0 if pcnt > 1.0 else pcnt
@@ -79,12 +115,21 @@ def progress_bar ( value, v_to = 100, v_from = 0, length=80,
     done_str = done_char[0] * done_len
     wait_str = wait_char[0] * wait_len
 
-    fmt = (percent_format + " [{}{}] " + value_format + "\r").format
-    sys.stdout.write(fmt(pcnt, done_str, wait_str, value))
+    if percent_format is not None :
+        sys.stdout.write(percent_format.format(pcnt))
+    sys.stdout.write(" [{}{}] ".format(done_str, wait_str))
+    if percent_format is not None :
+        sys.stdout.write(value_format.format(value))
+    sys.stdout.write("\r")
     sys.stdout.flush()
 
 def read_conf ( conffile, default=None ) :
     """ Read configure file, and remove comments, empty lines
+    args:
+        conffile: configure file name
+        default: default content if file not exists
+    returns:
+        a list of lines, leading and tailing space striped, empty line and comment removed
     """
     if os.path.isfile(conffile) :
         lines = open(conffile,"r").readlines()

@@ -1,5 +1,5 @@
- 87 10 38.29  # Site Longitude (deg min sec)
- 43 16 44.95  # Site Latitude (deg min sec)
+ 87:10:38.29  # Site Longitude (deg min sec)
+ 43:16:44.95  # Site Latitude (deg min sec)
  2050.0       # Site Alitude  (meters)
  +8           # Site Timezone
  50           # Extra time before and after exposure, for ex pointing and readout

@@ -56,7 +56,7 @@ Check file header info, from `files.xxx.lst` to `/tel/obsed/runcode/check.xxx.ls
 
 ##### param
 + `tel`: string, telescope brief
-+ `runcode`: string, yyyymm
++ `run`: string, yyyymm
 + `day`: 4-digit mjd of the night
 
 ### collect
@@ -65,7 +65,7 @@ Collect file info from daily check list and generate daily obsed list.
 
 ##### param
 + `tel`: string, telescope brief
-+ `runcode`: string, yyyymm
++ `run`: string, yyyymm
 + `day`: 4-digit mjd of the night
 
 *Divide check and collect into 2 steps, so we can `check` on server and then `collect` in any machine without fits. If we altered plan or mode, we do not need to scan fits again.*
@@ -87,18 +87,18 @@ Plot footprint map from obsed data, on a mollweide projected sky. It will genera
 + `reportfile`: text report filename. If not given, use current date and time. If given empty string, will not generate this report. Same rule for `equfile` and `galfile`.
 + `equfile`: filename of footprint in Equatorial system
 + `galfile`: filename of footprint in Galactic system
-+ `runcode`: optional, if specified, only draw this run, else draw all
++ `run`: optional, if specified, only draw this run, else draw all
 + `day`: optional, if provided, only draw this day. If without runcode, this is ommitted
 + `plan`: specified which plan to be drawn, if not, all plan
 + `before`: optional, if set True, will only draw fields before specified day or run
 
-### planner
+### takeoff
 
-Make plan of each day.
+Make schedule.
 
 ##### param
 + `tel`: string, telescope brief
-+ `runcode`, string, yyyymm
++ `run`, string, yyyymm
 + `day`: 4-digit mjd
 
 1. Load all blocks and fields

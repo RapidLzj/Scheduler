@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
     Module headerinfo : part of SAGE Digital Sky Survey Observation Scheduler
     v 1.0 : By Jie Zheng, 201607, Tucson, AZ, USA
@@ -16,8 +17,10 @@ import schdutil
 
 def headerinfo ( fitsfile ) :
     """ Get info from fits header
-    param fitsfile: fits filename, with full path
-    return: instance of class schdutil.check_info
+    args:
+        fitsfile: fits filename, with full path
+    return:
+        instance of class schdutil.check_info
     """
     if not os.path.isfile(fitsfile) :
         return None
@@ -35,14 +38,6 @@ def headerinfo ( fitsfile ) :
         expt   = float(util.sxpar(prihdr, "EXPTIME", 0.0))
         ra  = util.hms2dec(util.sxpar(prihdr, "RA", "0"))
         de = util.dms2dec(util.sxpar(prihdr, "DEC", "0"))
-        #res = {"filename": fitsfile,
-        #       "filesn": filesn,
-        #       "imagetype": imgtyp,
-        #       "object": object,
-        #       "filter": filter,
-        #       "exptime": expt,
-        #       "ra": ra,
-        #       "dec": de }
         res = schdutil.check_info(fitsfile, filesn, imgtyp, object, filter, expt, ra, de)
 
     elif telescope == "1M-WideField" :
@@ -53,14 +48,6 @@ def headerinfo ( fitsfile ) :
         expt   = float(util.sxpar(prihdr, "EXPTIME", 0.0))
         ra  = float(util.sxpar(prihdr, "OBJCTRA", 0.0))
         de = float(util.sxpar(prihdr, "OBJCTDEC", 0.0))
-        #res = {"filename": fitsfile,
-        #       "filesn": filesn,
-        #       "imagetype": imgtyp,
-        #       "object": object,
-        #       "filter": filter,
-        #       "exptime": expt,
-        #       "ra": ra,
-        #       "dec": de }
         res = schdutil.check_info(fitsfile, filesn, imgtyp, object, filter, expt, ra, de)
 
     else :

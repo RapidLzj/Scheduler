@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """
     Module collect : part of SAGE Digital Sky Survey Observation Scheduler
     v 1.0 : By Jie Zheng, 201607, Tucson, AZ, USA
@@ -14,11 +16,15 @@ import schdutil
 
 
 def collect ( tel, run, day ) :
-    """
+    """ collect info from check list, compare with exposure mode and plan, make obsed list
+    args:
+        tel: telescope brief code
+        run: run code, usually yyyymm format
+        day: 4-digit mjd of the day, JD-2450000.5
     """
     # search check filenames
-    checklist  = "{tel}/obsed/{run}/check.J{day:0>4d}.lst".format(tel=tel, run=run, day=day)
-    obsedlist  = "{tel}/obsed/{run}/obsed.J{day:0>4d}.lst".format(tel=tel, run=run, day=day)
+    checklist  = "{tel}/obsed/{run}/check.J{day:04d}.lst".format(tel=tel, run=run, day=day)
+    obsedlist  = "{tel}/obsed/{run}/obsed.J{day:04d}.lst".format(tel=tel, run=run, day=day)
 
     if not os.path.isfile(checklist) :
         print ("ERROR!! Check list NOT exists: \'{0}\'".format(checklist))
@@ -64,17 +70,17 @@ def collect ( tel, run, day ) :
     # get an fixed order, so no random between different system
     plancode = plans.keys()
     plancode.sort()
-    f = open(obsedlist, "w")
-    f.write("#{:<11s}".format("Object"))
-    for p in plancode :
-        f.write(" {:>4s}".format(plans[p].name[0:4]))
-    f.write("\n\n")
-    for o in objmap :
-        ot = "{:<12s}".format(o)
-        ft = ["{:>4.1f}".format(objmap[o][p]) for p in plancode]
-        tt = ot + " " + " ".join(ft) + "\n"
-        f.write(tt)
-    f.close()
+    with open(obsedlist, "w") as f :
+        f.write("#{:<11s}".format("Object"))
+        for p in plancode :
+            f.write(" {:>4s}".format(plans[p].name[0:4]))
+        f.write("\n\n")
+        for o in objmap :
+            ot = "{:<12s}".format(o)
+            ft = ["{:>4.1f}".format(objmap[o][p]) for p in plancode]
+            tt = ot + " " + " ".join(ft) + "\n"
+            f.write(tt)
+    #f.close()
 
     print ("Collect OK! {0} objects from `{1}`.".format(len(objmap), checklist))
 
