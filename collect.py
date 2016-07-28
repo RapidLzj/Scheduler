@@ -84,7 +84,8 @@ def collect ( tel, run, day ) :
 
     print ("Collect OK! {0} objects from `{1}`.".format(len(objmap), checklist))
 
-if __name__ =="__main__" :
+
+if __name__ == "__main__" :
     if len(sys.argv) < 4 :
         print ("""Syntax:
     python collect.py tel run day

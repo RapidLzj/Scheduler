@@ -45,7 +45,6 @@ def footprint ( tel, reportfile=None, equfile=None, galfile=None,
     fields = schdutil.load_field(tel)
     plancode = plans.keys()
     plancode.sort()
-    np = len(plancode)
     if plan is not None and plan not in plancode :
         plan = None
     if plan is not None :
@@ -71,39 +70,6 @@ def footprint ( tel, reportfile=None, equfile=None, galfile=None,
         obsedlist = [f for f in obsedlist if f <= maxmark]
 
     schdutil.load_obsed(fields, obsedlist, marklist, plancode, plan)
-    ## add empty factor for all field
-    #emptyfactor = {} # make an empty factor
-    #for p in plancode :
-    #    emptyfactor[p] = 0.0
-    #for f in fields :
-    #    fields[f].factor = emptyfactor.copy()
-    #    fields[f].mark = emptyfactor.copy()
-    #
-    ## load obsed list and mark fields
-    #for obsed in obsedlist :
-    #    factorlines = open(obsed, "r").readlines()
-    #    ismark = obsed in marklist
-    #    for factor in factorlines[2:] : # skip 2 heading line
-    #        pp = factor.strip().split()
-    #        if pp[0].isdigit() :
-    #            id = int(pp[0])
-    #            if id in fields :
-    #                for i in range(np) :
-    #                    fields[id].factor[plancode[i]] += float(pp[i+1])
-    #                    if ismark :
-    #                        fields[id].mark[plancode[i]] += float(pp[i+1])
-    #
-    ## get tag: 0 unobserved, 1 observed unmarked, 2 marked
-    #if plan == None :
-    #    for f in fields :
-    #        fsum = sum(fields[f].factor.values())
-    #        msum = sum(fields[f].mark.values())
-    #        fields[f].tag = 0 if fsum == 0.0 else 1 if msum == 0.0 else 2
-    #else :
-    #    for f in fields :
-    #        fsum = fields[f].factor[plan]
-    #        msum = fields[f].mark[plan]
-    #        fields[f].tag = 0 if fsum == 0.0 else 1 if msum == 0.0 else 2
 
     # generate a text report
     if reportfile != "" :

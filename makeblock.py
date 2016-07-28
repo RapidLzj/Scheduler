@@ -33,7 +33,7 @@ def makeblock ( tel, blocksize ) :
     lastra, lastde = -99.99, -99.99
     blockix = []
     for ix in ixsort :
-        if len(blockix) >= blocksize or bare[ix, 2] != lastde or bare[ix, 1] - lastra > 5.0 :
+        if len(blockix) >= blocksize or bare[ix, 2] != lastde or bare[ix, 1] - lastra > 2.0 / np.cos(np.deg2rad(lastde)) :
             # end previous block
             blockde = np.median(bare[blockix, 2]) if len(blockix) > 0 else -9.9
             blockra = np.median(bare[blockix, 1]) if len(blockix) > 0 else -9.9
@@ -60,4 +60,5 @@ def makeblock ( tel, blocksize ) :
 
 
 if __name__ == "__main__" :
+    makeblock("bok", 7)
     makeblock("xao", 5)
