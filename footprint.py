@@ -69,7 +69,7 @@ def footprint ( tel, reportfile=None, equfile=None, galfile=None,
         maxmark = max(marklist)
         obsedlist = [f for f in obsedlist if f <= maxmark]
 
-    schdutil.load_obsed(fields, obsedlist, marklist, plancode, plan)
+    schdutil.load_obsed(fields, obsedlist, plans, marklist)
 
     # generate a text report
     if reportfile != "" :

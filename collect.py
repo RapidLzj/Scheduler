@@ -15,16 +15,22 @@ import util
 import schdutil
 
 
-def collect ( tel, run, day ) :
+def collect ( tel, yr, mn, dy, run=None ) :
     """ collect info from check list, compare with exposure mode and plan, make obsed list
     args:
         tel: telescope brief code
-        run: run code, usually yyyymm format
-        day: 4-digit mjd of the day, JD-2450000.5
+        yr: year of obs date, 4-digit year
+        mn: year of obs date, 1 to 12
+        dy: day of obs date, 0 to 31, or extended
+        run: run code, default is `yyyymm`
     """
+    site = schdutil.load_basic(tel)
+    mjd18 = schdutil.mjd_of_night(yr, mn, dy, site)
+    if run is None :
+        run = "{year:04d}{month:02d}".format(year=yr, month=mn)
     # search check filenames
-    checklist  = "{tel}/obsed/{run}/check.J{day:04d}.lst".format(tel=tel, run=run, day=day)
-    obsedlist  = "{tel}/obsed/{run}/obsed.J{day:04d}.lst".format(tel=tel, run=run, day=day)
+    checklist  = "{tel}/obsed/{run}/check.J{day:04d}.lst".format(tel=tel, run=run, day=mjd18)
+    obsedlist  = "{tel}/obsed/{run}/obsed.J{day:04d}.lst".format(tel=tel, run=run, day=mjd18)
 
     if not os.path.isfile(checklist) :
         print ("ERROR!! Check list NOT exists: \'{0}\'".format(checklist))
@@ -86,12 +92,17 @@ def collect ( tel, run, day ) :
 
 
 if __name__ == "__main__" :
-    if len(sys.argv) < 4 :
+    if len(sys.argv) < 5 :
         print ("""Syntax:
-    python collect.py tel run day
+    python collect.py tel year month day [run]
         tel: 3 letter code of telescope, we now have bok and xao
+        year: 4-digit year
+        month: month number, 1 to 12
+        day: day number, 1 to 31, or extended
         run: code of run, usually as yyyymm format
-        day: modified Julian day of the date, 4 digit, JD-2450000.5
     """)
     else :
-        collect ( sys.argv[1], sys.argv[2], int(sys.argv[3]))
+        run = None
+        if len(sys.argv) > 5:
+            run = sys.argv[5]
+        collect ( sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), run)

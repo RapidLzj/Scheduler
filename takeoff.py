@@ -65,7 +65,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
 
     # night parameters
     # mjd of 18:00 of site timezone, as code of tonight
-    mjd18 = int(schdutil.mjd(yr, mn, dy, 18, 0, 0, site.tz)) % 10000
+    mjd18 = schdutil.mjd_of_night(yr, mn, dy, site)
     # mjd of local midnight, as calculate center
     mjd24 = schdutil.mjd(yr, mn, dy, 24 - site.lon / 15.0, 0, 0,  0)
     tmjd24 = Time(mjd24, format="mjd")
@@ -99,7 +99,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
     # default run name rule
     if run is None :
         run = "{year:04d}{month:02d}".format(year=yr, month=mn)
-    daystr = "{year:04d}_{month:02d}_{day:02d}".format(year=yr, month=mn, day=dy)
+    daystr = "{year:04d}.{month:02d}.{day:02d}".format(year=yr, month=mn, day=dy)
     # schedule dir
     daypath = "{tel}/schedule/{run}/J{mjd:0>4d}/".format(tel=tel, run=run, mjd=mjd18)
     if os.path.isdir(daypath) :
@@ -115,8 +115,18 @@ def takeoff ( tel, yr, mn, dy, run=None,
 
     ######################################################################################
 
-    rep_f = open(daypath + "report_" + daystr + ".txt", "w")
-    tea(rep_f, "--------========  Start : {}  ========--------\n".format(rep_start_time.iso))
+    # output filename or filename format
+    rep_fn  = "{path}report.{mjd:04}.{days}.txt" .format(path=daypath, mjd=mjd18, days=daystr)
+    sum_fn  = "{path}summary.{mjd:04}.{days}.txt".format(path=daypath, mjd=mjd18, days=daystr)
+    plan_fn = "{path}plan.{mjd:04}.{days}.txt"   .format(path=daypath, mjd=mjd18, days=daystr)
+    eps_fn  = "{path}plan.{mjd:04}.{days}.eps"   .format(path=daypath, mjd=mjd18, days=daystr)
+    png_fn  = "{path}plan.{mjd:04}.{days}.png"   .format(path=daypath, mjd=mjd18, days=daystr)
+    chk_fn_fmt = "{path}chk.{mjd:04}.{sn:02}.{bname}.txt".format
+    see_fn_fmt = "{path}see.{mjd:04}.{sn:02}.{bname}.png".format
+    scr_fn_fmt = "{path}scr.{mjd:04}.{sn:02}.{bname}.txt".format
+
+    rep_f = open(rep_fn, "w")
+    tea(rep_f, "        --------========  Start : {}  ========--------\n".format(rep_start_time.iso))
 
     # load fields and plan
     plans  = schdutil.load_expplan(tel)
@@ -127,7 +137,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
 
     # find all obsed file, and mark them
     obsedlist = schdutil.ls_files("{tel}/obsed/*/obsed.J*.lst".format(tel=tel))
-    schdutil.load_obsed(fields, obsedlist, [], plancode, None)
+    schdutil.load_obsed(fields, obsedlist, plans)
     afields = np.array(fields.values())
     ara = np.array([f.ra for f in afields])
     ade = np.array([f.de for f in afields])
@@ -203,10 +213,14 @@ def takeoff ( tel, yr, mn, dy, run=None,
         tea(rep_f, "Simulation file: " + simu_check_fn)
 
     # format of output
-    rep_tit = "{sn:2}   {bn:^7} ({ra:^9} {de:^9}) {airm:4} @ {clock:5} [{lst:^5}] {btime:>4}s".format(
+    rep_tit = "{sn:2}   {bn:^7} ({ra:^9} {de:^9}) {airm:4} @ {clock:5} [{lst:^5}] {btime:>5}".format(
         sn="No", bn="Block", ra="RA", de="Dec", airm="Airm", clock="Time", lst="LST", btime="Cost")
     rep_fmt = "{sn:02}: #{bn:7} ({ra:9.5f} {de:+9.5f}) {airm:4.2f} @ {clock:5} [{lst:5}] {btime:>4d}s".format
     rep_war = "**:  {skip:>7} minutes SKIPPED !! {skipbegin:5} ==> {clock:5} [{lst:5}]".format
+
+    sum_tit = "#{mjd:3} {clock:5} {sn:2} {bn:^7} {ra:^9} {de:^9} {airm:4} {lst:^5} {btime:>4}\n".format(
+        mjd="MJD", clock="Time", sn="No", bn="Block", ra="RA", de="Dec", airm="Airm", lst="LST", btime="Cost")
+    sum_fmt = "{mjd:04d} {clock:5s} {sn:02d} {bn:7s} {ra:9.5f} {de:+9.5f} {airm:4.2f} {lst:5s} {btime:>4d}\n".format
 
     chk_fmt = "{ord:03d} {bn:7s} ({ra:9.5f} {de:+9.5f}) {airm:4.2f} {ha:5.2f} {key:>5.1f} {other}\n".format
     chk_tit = "#{ord:>2} {bn:^7} ({ra:>9} {de:>9}) {airm:>4} {ha:5} {key:>5} {other}\n".format(
@@ -215,6 +229,9 @@ def takeoff ( tel, yr, mn, dy, run=None,
     scr_fmt = (site.fmt + "\n").format
 
     tea(rep_f, rep_tit)
+    sum_f = open(sum_fn, "w")
+    plan_f = open(plan_fn, "w")
+    sum_f.write(sum_tit)
 
     # init before loop
     block_sn = 0  # block sn, count blocks, and also for output
@@ -223,6 +240,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
     skip_count = 0
     skip_total = 0.0
     exp_count = 0
+    b_airmass = [] # collect airmass
 
     ######################################################################################
     while clock_now < obs_end :
@@ -256,6 +274,9 @@ def takeoff ( tel, yr, mn, dy, run=None,
             tea(rep_f, rep_war( skip=int((clock_now - skip_begin) * 60),
                 skipbegin=util.hour2str(skip_begin),
                 clock=util.hour2str(clock_now), lst=util.hour2str(lst_now()) ))
+            sum_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(skip_begin), sn=0,
+                bn="SKIP!!!", ra=0.0, de=0.0, airm=0.0,
+                lst=util.hour2str(lst_now()), btime=int(int((clock_now - skip_begin) * 3600)) ))
             skip_count += 1
             skip_total += clock_now - skip_begin
             skip_begin = None
@@ -289,7 +310,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
 
         # generate a check file about selection
         # check file, list blocks: name, ra, dec, fields, airmass, rank
-        chk_fn = "{}chk_{:02}_{}.txt".format(daypath, block_sn, bname_best)
+        chk_fn = chk_fn_fmt(path=daypath, mjd=mjd18, sn=block_sn, bname=bname_best)
         with open(chk_fn, "w") as chk_f :
             chk_f.write(chk_tit)
             i = 0
@@ -304,7 +325,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
         # plot a check map
         plotmap.plotmap(ara, ade, np.array([f.tag for f in afields]),
             title=tel+" "+daystr+" "+util.hour2str(clock_now),
-            pngfile="{}see_{:02}_{}_{}.png".format(daypath, block_sn, bname_best, util.hour2str(clock_now, deleimiter="")),
+            pngfile=see_fn_fmt(path=daypath, mjd=mjd18, sn=block_sn, bname=bname_best),
             mpos=(mpos.ra, mpos.dec),
             spos=(spos.ra, spos.dec),
             zenith=(lst_now() * 15.0, site.lat) )
@@ -314,25 +335,33 @@ def takeoff ( tel, yr, mn, dy, run=None,
                 f.tag &= 0x03
 
         # script file, using format from configuration
-        scr_fn = "{}scr_{:02}_{}.txt".format(daypath, block_sn, bname_best)
+        scr_fn = scr_fn_fmt(path=daypath, mjd=mjd18, sn=block_sn, bname=bname_best)
         block_time = 0  # time cost for this block, in seconds
         with open(scr_fn, "w") as scr_f :
             # script: plan loop, field loop, do only factor < 1
             for p in plancode :
-                for f in block_best.fields :
-                    factor_work = 1.0 - f.factor[p]
-                    nrepeat = int(np.ceil(factor_work / plans[p].factor))
-                    for i in range(nrepeat) :
-                        scr_f.write(scr_fmt(e=schdutil.exposure_info.make(plans[p], f)))
-                        if simulate :
-                            sim_f.write("{}\n".format(schdutil.check_info.simulate(plans[p], f)))
-                        block_time += plans[p].expt + site.inter
-                        exp_count += 1
+                if plans[p].active :
+                    for f in block_best.fields :
+                        factor_work = 1.0 - f.factor[p]
+                        nrepeat = int(np.ceil(factor_work / plans[p].factor))
+                        for i in range(nrepeat) :
+                            scr = scr_fmt(e=schdutil.exposure_info.make(plans[p], f))
+                            scr_f.write(scr)
+                            plan_f.write(scr)
+                            if simulate :
+                                sim_f.write("{}\n".format(schdutil.check_info.simulate(plans[p], f)))
+                            block_time += plans[p].expt + site.inter
+                            exp_count += 1
+        plan_f.write("\n")  # write a blank line to seperate blocks
 
-        # report
-        tea(rep_f, rep_fmt(
-            sn=block_sn, bn=bname_best, ra=block_best.ra, de=block_best.de, airm=airm_2[ix_best],
+        # report & summary
+        tea(rep_f, rep_fmt( sn=block_sn,
+            bn=bname_best, ra=block_best.ra, de=block_best.de, airm=airm_2[ix_best],
             clock=util.hour2str(clock_now), lst=util.hour2str(lst_now()), btime=int(block_time) ))
+        sum_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(clock_now), sn=block_sn,
+            bn=bname_best, ra=block_best.ra, de=block_best.de, airm=airm_2[ix_best],
+            lst=util.hour2str(lst_now()), btime=int(block_time) ))
+        b_airmass.append(airm_2[ix_best])
 
         # remove used block from newblock
         del newblock[bname_best]
@@ -345,12 +374,16 @@ def takeoff ( tel, yr, mn, dy, run=None,
         tea(rep_f, rep_war( skip=int((clock_now - skip_begin) * 60),
             skipbegin=util.hour2str(skip_begin),
             clock=util.hour2str(clock_now), lst=util.hour2str(lst_now()) ))
+        sum_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(skip_begin), sn=0,
+            bn="SKIP!!!", ra=0.0, de=0.0, airm=0.0,
+            lst=util.hour2str(lst_now()), btime=int(int((clock_now - skip_begin) * 3600)) ))
         skip_count += 1
         skip_total += clock_now - skip_begin
         skip_begin = None
 
     ######################################################################################
 
+    sum_f.close()
     if simulate:
         sim_f.close()
 
@@ -359,42 +392,44 @@ def takeoff ( tel, yr, mn, dy, run=None,
         "Total {b} blocks, {e} exposures, {t} costed. From {s} to {f}".format(
             b=block_sn, e=exp_count, t=util.hour2str(clock_now-obs_begin),
             s=util.hour2str(obs_begin), f=util.hour2str(clock_now)),
+        "Estimate airmass: {me:5.3f}+-{st:5.3f}, range: {mi:4.2f} -> {ma:4.2f}".format(
+            me=np.mean(b_airmass), st=np.std(b_airmass), mi=np.min(b_airmass), ma=np.max(b_airmass)),
         "SKIP: {sc} sessions encounted, {st} time wasted.".format(
             sc=skip_count, st=util.hour2str(skip_total)) ],
-        title="Stat") )
+        title="Summary") )
 
     # plot task map of this night
     plotmap.plotmap(ara, ade, np.array([f.tag for f in afields]),
-        title=tel+" "+daystr,
-        epsfile=daypath + "obs_" + daystr + ".eps",
-        pngfile=daypath + "obs_" + daystr + ".png",
+        title="{tel} {days} ({mjd})".format(tel=tel, days=daystr, mjd=mjd18),
+        epsfile=eps_fn,
+        pngfile=png_fn,
         mpos=(mpos.ra, mpos.dec),
         spos=(spos.ra, spos.dec) )
 
     # closing report and summary
     rep_end_time = Time.now()
-    tea(rep_f, "\n--------========  End : {}  ========--------\n{:.1f} seconds used.\n".format(
+    tea(rep_f, "\n        --------========  End : {}  ========--------\n{:.1f} seconds used.\n".format(
         rep_end_time.iso, (rep_end_time - rep_start_time).sec))
     rep_f.close()
 
     # call collect to finish simulation
     if simulate :
-        collect.collect(tel, run, mjd18)
+        collect.collect(tel, yr, mn, dy, run)
 
 
 ###############################################################################
 
 if __name__ == "__main__" :
-    t0 = Time.now()
     if len(sys.argv) < 4 :
         print ("""Syntax:
-    python takeoff.py tel year month day [run] [overwrite]
+    python takeoff.py tel year month day [run] [overwrite] [simulate]
         tel: 3 letter code of telescope, we now have bok and xao
         year: 4 digit year
         month: month, 1-12
         day: day, 1-31, or extented
         run: code of run, if not yyyymm format
         overwrite: anything to present overwrite
+        simulate: simulate observation results
     """)
     else :
         ov, si = False, False
@@ -409,5 +444,3 @@ if __name__ == "__main__" :
             run = None
         takeoff(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), run,
                 overwrite=ov, simulate=si)
-    t1 = Time.now()
-    #print ("---> {:.1f}".format((t1-t0).sec))

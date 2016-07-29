@@ -1,5 +1,5 @@
-#Code Filter ExpT Repeat  Factor  Dither Name
-    0     Hw   10      1     1.0  1      Hw10
-    1     Hw   60      1     1.0  0      Hw60
-    2     Hn   50      1     1.0  1      Hn50
-    3     Hn  150      2     0.5  0      Hn300
+#Code  Name  Filter  ExpT  Repeat  Factor  Active Dither1 Dither2
+    0  Hw10  Hw       10      1       1.0       1     0.0     0.0
+    1  Hw60  Hw       60      1       1.0       1     0.0     0.0
+    2  Hn50  Hn       50      1       1.0       1     0.0     0.0
+    3  Hn300 Hn      150      2       0.5       1     0.0     0.0

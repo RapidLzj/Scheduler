@@ -26,26 +26,26 @@ class base_info :
 class plan_info (base_info) :
     """ A structure like class, holding info of plan
     """
-    def __init__ (self, code, name, filter, expt, repeat, factor, dither1, dither2) :
+    def __init__ (self, code, name, filter, expt, repeat, factor, active, dither1, dither2) :
         base_info.__init__(self,
             code=code, name=name, filter=filter, expt=expt, repeat=repeat, factor=factor,
-            dither1=dither1, dither2=dither2)
+            active=active, dither1=dither1, dither2=dither2)
 
     @staticmethod
     def parse ( line ) :
         """ Parse a new instance from line, columns seperated by space
-        Col: code, name, filter, expt, repeat, factor, dither1, dither2
+        Col: code, name, filter, expt, repeat, factor, active, dither1, dither2
         dither1/2 are optional, default 0.0 0.0
         """
-        xline = line + " 0.0 0.0" # add extra fields, add up the missing fields
+        xline = line + " 1 0.0 0.0" # add extra fields, add up the missing fields
         pp = xline.split()
         x = plan_info(int(pp[0]), pp[1], pp[2], float(pp[3]),
-                      int(pp[4]), float(pp[5]), float(pp[6]), float(pp[7]))
+                      int(pp[4]), float(pp[5]), (int(pp[6]) != 0), float(pp[7]), float(pp[8]))
         return x
 
     def __repr__ ( self ) :
-        return ("{s.code:<2d} {s.name:>10s} {s.filter:>8s} {s.expt:>5.1f} " +
-                "{s.repeat:>2d} {s.factor:>3.1f} {s.dither1:>5.1f} {s.dither2:>5.1f}").format(s=self)
+        return ("{s.code:<2d} {s.name:>10s} {s.filter:>8s} {s.expt:>5.1f} {s.repeat:>2d} {s.factor:>3.1f} "
+                "{s.active:1d} {s.dither1:>5.1f} {s.dither2:>5.1f}").format(s=self)
 
 
 class mode_info (base_info) :
@@ -271,15 +271,21 @@ def load_field ( tel ) :
     return fields
 
 
-def load_obsed ( fields, obsedlist, marklist, plancode, plan=None ) :
+def load_obsed ( fields, obsedlist, plans, marklist=[] ) :
     """ load obsed list, and sum obsed factor to fields.
     args:
         fields: input and output, field dict, each object will add factor, mark, and tag
         obsedlist: obsed file to be loaded
+        plans: plan dict
         marklist: mark file, factor in this list will be sum to mark array
-        plancode: sorted plan code, only code, not whole plan
-        plan: if specified, use this plan to judge tag, else any plan
+        x/plancode: sorted plan code, only code, not whole plan
+        x/plan: if specified, use this plan to judge tag, else any plan
+    returns:
+        Nothing. Obsed factor and tag updated in fields
     """
+    plancode = plans.keys()
+    plancode.sort()
+    nplan = len(plans)
     # add empty factor for all field
     emptyfactor = {} # make an empty factor
     for p in plancode :
@@ -289,18 +295,17 @@ def load_obsed ( fields, obsedlist, marklist, plancode, plan=None ) :
         fields[f].mark = emptyfactor.copy()
 
     # load obsed list and mark fields
-    nplan = len(plancode)
     for obsed in obsedlist :
         factorlines = open(obsed, "r").readlines()
-        ismark = obsed in marklist
+        ismarked = obsed in marklist
         for factor in factorlines[2:] : # skip 2 heading line
             pp = factor.strip().split()
-            if pp[0].isdigit() :
+            if pp[0].isdigit() : # handle only survey field, int, discard other test
                 id = int(pp[0])
                 if id in fields :
                     for i in range(nplan) :
                         fields[id].factor[plancode[i]] += float(pp[i+1])
-                        if ismark :
+                        if ismarked :
                             fields[id].mark[plancode[i]] += float(pp[i+1])
 
     # get tag: mark <= fmax, fmin <= fmax, mark <=> fmin
@@ -308,21 +313,34 @@ def load_obsed ( fields, obsedlist, marklist, plancode, plan=None ) :
     #    1 partly observed unmarked -- fmin <  1
     #    2 full observed unmarked   -- fmin >= 1
     #    3 marked                   -- mark > 0
-    if plan is None :
-        for f in fields :
-            fmax = max(fields[f].factor.values())
-            fmin = min(fields[f].factor.values())
-            mark = max(fields[f].mark.values())
-            fields[f].tag = 0 if fmax == 0.0 else \
-                            3 if mark >  0.0 else \
-                            1 if fmin <  1.0 else 2
-    else :
-        for f in fields :
-            fmin = fmax = fields[f].factor[plan]
-            mark = fields[f].mark[plan]
-            fields[f].tag = 0 if fmax == 0.0 else \
-                            3 if mark >  0.0 else \
-                            1 if fmin <  1.0 else 2
+
+    # old version using plan
+    #if plan is None :
+    #    for f in fields :
+    #        fmax = max(fields[f].factor.values())
+    #        fmin = min(fields[f].factor.values())
+    #        mark = max(fields[f].mark.values())
+    #        fields[f].tag = 0 if fmax == 0.0 else \
+    #                        3 if mark >  0.0 else \
+    #                        1 if fmin <  1.0 else 2
+    #else :
+    #    for f in fields :
+    #        fmin = fmax = fields[f].factor[plan]
+    #        mark = fields[f].mark[plan]
+    #        fields[f].tag = 0 if fmax == 0.0 else \
+    #                        3 if mark >  0.0 else \
+    #                        1 if fmin <  1.0 else 2
+
+    # new version using plans.active
+    for f in fields.values() :
+        activefactor = [f.factor[p] for p in plancode if plans[p].active]
+        activemark = [f.mark[p] for p in plancode if plans[p].active]
+        fmax = max(activefactor)
+        fmin = min(activefactor)
+        mark = max(activemark)
+        f.tag = 0 if fmax == 0.0 else \
+                        3 if mark >  0.0 else \
+                        1 if fmin <  1.0 else 2
 
 
 def ls_files ( wildcard ) :
@@ -460,4 +478,19 @@ def airmass (lat, lst, ra, dec) :
     x[np.where((x < 0.0) | (x > 9.9))] = 9.9
 
     return x
+
+
+def mjd_of_night (yr, mn, dy, site) :
+    """ get 4-digit mjd code for the site, using local 18:00
+    args:
+        yr: year
+        mn: month
+        dy: day
+        site: site object
+    returns:
+        jjjj, 4 digit of mjd at local 18:00
+    """
+    j = int(mjd(yr, mn, dy, 18, 0, 0, site.tz)) % 10000
+    return j
+
 

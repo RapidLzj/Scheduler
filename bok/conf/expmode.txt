@@ -2,3 +2,6 @@
 strumu   60    0    1.0
 strumu   50    0    1.0
 strumu   40    0    1.0
+strumv   60    1    1.0
+strumv   40    1    1.0
+strumv   20    1    1.0
