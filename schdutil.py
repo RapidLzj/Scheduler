@@ -132,6 +132,9 @@ class field_info (base_info) :
         if self.__dict__.has_key("tag") : fmt += "  {s.tag:1d}"
         return fmt.format(s=self)
 
+    def airmass (self, lat, lst) :
+        return airmass(lat, lst, self.ra, self.de)
+
 
 class block_info (base_info) :
     """ A structure like class, holding info of block
@@ -475,7 +478,11 @@ def airmass (lat, lst, ra, dec) :
     x2 = np.cos(lat) * np.cos(dec)
     ha = lst - ra
     x = 1.0 / (x1 + x2 * np.cos(ha))
-    x[np.where((x < 0.0) | (x > 9.9))] = 9.9
+    if type(x) == np.ndarray :
+        x[np.where((x < 0.0) | (x > 9.99))] = 9.99
+    else :
+        if (x < 0.0) or (x > 9.99) :
+            x = 9.99
 
     return x
 

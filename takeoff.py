@@ -37,7 +37,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
               moon_dis_limit=50.0,
               airmass_limit = 1.75,
               ha_limit = 4.0,
-              overwrite=False, simulate=False ) :
+              overwrite=False, simulate=False, check=False ) :
     """ Generate observation script
     args:
         tel: telescope code
@@ -52,6 +52,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
         ha_limit: limit of hour angle, default 3.0, should be greater for pole area
         overwrite: bool, when output dir already exists, overwrite or not
         simulate: bool, generate a obsed list or not
+        check: bool, if check is true, will report for each block's selection
     """
 
 	# all var starts with `rep_` contains report info
@@ -116,11 +117,12 @@ def takeoff ( tel, yr, mn, dy, run=None,
     ######################################################################################
 
     # output filename or filename format
-    rep_fn  = "{path}report.{mjd:04}.{days}.txt" .format(path=daypath, mjd=mjd18, days=daystr)
-    sum_fn  = "{path}summary.{mjd:04}.{days}.txt".format(path=daypath, mjd=mjd18, days=daystr)
-    plan_fn = "{path}plan.{mjd:04}.{days}.txt"   .format(path=daypath, mjd=mjd18, days=daystr)
-    eps_fn  = "{path}plan.{mjd:04}.{days}.eps"   .format(path=daypath, mjd=mjd18, days=daystr)
-    png_fn  = "{path}plan.{mjd:04}.{days}.png"   .format(path=daypath, mjd=mjd18, days=daystr)
+    rep_fn  = "{path}report.{mjd:04}.{days}.txt"  .format(path=daypath, mjd=mjd18, days=daystr)
+    sumb_fn = "{path}sumblock.{mjd:04}.{days}.txt".format(path=daypath, mjd=mjd18, days=daystr)
+    sumf_fn = "{path}sumfield.{mjd:04}.{days}.txt".format(path=daypath, mjd=mjd18, days=daystr)
+    plan_fn = "{path}plan.{mjd:04}.{days}.txt"    .format(path=daypath, mjd=mjd18, days=daystr)
+    eps_fn  = "{path}plan.{mjd:04}.{days}.eps"    .format(path=daypath, mjd=mjd18, days=daystr)
+    png_fn  = "{path}plan.{mjd:04}.{days}.png"    .format(path=daypath, mjd=mjd18, days=daystr)
     chk_fn_fmt = "{path}chk.{mjd:04}.{sn:02}.{bname}.txt".format
     see_fn_fmt = "{path}see.{mjd:04}.{sn:02}.{bname}.png".format
     scr_fn_fmt = "{path}scr.{mjd:04}.{sn:02}.{bname}.txt".format
@@ -131,9 +133,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
     # load fields and plan
     plans  = schdutil.load_expplan(tel)
     fields = schdutil.load_field(tel)
-    plancode = plans.keys()
-    plancode.sort()
-    nplan = len(plancode)
+    active_plans = {p:plans[p] for p in plans if plans[p].active}
 
     # find all obsed file, and mark them
     obsedlist = schdutil.ls_files("{tel}/obsed/*/obsed.J*.lst".format(tel=tel))
@@ -196,10 +196,10 @@ def takeoff ( tel, yr, mn, dy, run=None,
 
     # start to make schedule
     clock_now = obs_begin
-    lst_now = lambda : (lst24 + clock_now) % 24.0  # lst of start, use lst_now() to call this
+    lst_clock = lambda c : (lst24 + c) % 24.0  # lst of start, use lst_clock(clock_now) to call this
 
     tea(rep_f, "Begin to schedule from {clock}, LST {lst}\n".format(
-        clock=util.hour2str(clock_now), lst=util.hour2str(lst_now())))
+        clock=util.hour2str(clock_now), lst=util.hour2str(lst_clock(clock_now))))
 
     # define a lambda rank function
     rank = lambda aa : aa.argsort().argsort()
@@ -218,9 +218,9 @@ def takeoff ( tel, yr, mn, dy, run=None,
     rep_fmt = "{sn:02}: #{bn:7} ({ra:9.5f} {de:+9.5f}) {airm:4.2f} @ {clock:5} [{lst:5}] {btime:>4d}s".format
     rep_war = "**:  {skip:>7} minutes SKIPPED !! {skipbegin:5} ==> {clock:5} [{lst:5}]".format
 
-    sum_tit = "#{mjd:3} {clock:5} {sn:2} {bn:^7} {ra:^9} {de:^9} {airm:4} {lst:^5} {btime:>4}\n".format(
-        mjd="MJD", clock="Time", sn="No", bn="Block", ra="RA", de="Dec", airm="Airm", lst="LST", btime="Cost")
-    sum_fmt = "{mjd:04d} {clock:5s} {sn:02d} {bn:7s} {ra:9.5f} {de:+9.5f} {airm:4.2f} {lst:5s} {btime:>4d}\n".format
+    sum_tit = "#{mjd:3} {clock:5} {sn:>2} {bn:^7} {ra:^9} {de:^9} {airm:4} {lst:^5} {btime:>4}\n".format(
+        mjd="MJD", clock="Time", sn="No", bn="Object", ra="RA", de="Dec", airm="Airm", lst="LST", btime="Cost")
+    sum_fmt = "{mjd:04d} {clock:5s} {sn:02d} {bn:7} {ra:9.5f} {de:+9.5f} {airm:4.2f} {lst:5s} {btime:>4d}\n".format
 
     chk_fmt = "{ord:03d} {bn:7s} ({ra:9.5f} {de:+9.5f}) {airm:4.2f} {ha:5.2f} {key:>5.1f} {other}\n".format
     chk_tit = "#{ord:>2} {bn:^7} ({ra:>9} {de:>9}) {airm:>4} {ha:5} {key:>5} {other}\n".format(
@@ -229,9 +229,11 @@ def takeoff ( tel, yr, mn, dy, run=None,
     scr_fmt = (site.fmt + "\n").format
 
     tea(rep_f, rep_tit)
-    sum_f = open(sum_fn, "w")
+    sumb_f = open(sumb_fn, "w")
+    sumf_f = open(sumf_fn, "w")
     plan_f = open(plan_fn, "w")
-    sum_f.write(sum_tit)
+    sumb_f.write(sum_tit)
+    sumf_f.write(sum_tit)
 
     # init before loop
     block_sn = 0  # block sn, count blocks, and also for output
@@ -239,11 +241,14 @@ def takeoff ( tel, yr, mn, dy, run=None,
     span_skip = 1.0 / 60.0 # how long skipped each loop
     skip_count = 0
     skip_total = 0.0
-    exp_count = 0
-    b_airmass = [] # collect airmass
+    exp_airmass = [] # collect airmass
+    lra, lde = 999.99, 99.99 # last field ra, dec
+    # time need of a full round for a field
+    plan_time = sum([(plans[p].expt + site.inter) * plans[p].repeat for p in active_plans]) / 3600.0
 
     ######################################################################################
     while clock_now < obs_end :
+        lst_now = lst_clock(clock_now)
 
         if len(newblock) == 0 :
             # no available block, print error message, and end procedure
@@ -252,15 +257,17 @@ def takeoff ( tel, yr, mn, dy, run=None,
 
         bra = np.array([b.ra for b in newblock.values()])
         bde = np.array([b.de for b in newblock.values()])
+        bsize = np.array([len(b.fields) for b in newblock.values()])
         bname = np.array(newblock.keys())
 
+        # assume all fields need a full round, this is estimated center lst
+        blst = lst_now + plan_time * bsize / 2.0
         # calculate airmass for all available block
-        ha = np.abs(lst_now() - bra / 15.0)
-        airm = schdutil.airmass(site.lat, lst_now(), bra, bde)
+        ha = util.angle_dis(blst * 15.0, bra) / 15.0
+        airm = schdutil.airmass(site.lat, blst, bra, bde)
 
         # keep blocks with airm < airmlimit & hour angle < ha_limit, and then dec < min dec + 4 deg
-        ix_1 = np.where((airm < airmass_limit) & (airm > airmass_lbound) &
-                        ((ha < ha_limit) | (ha > 24.0 - ha_limit)))
+        ix_1 = np.where((airm < airmass_limit) & (airm > airmass_lbound) & (np.abs(ha) < ha_limit))
         # no available block handler
         if len(ix_1[0]) == 0 :
             # no good block, have bad block
@@ -273,27 +280,26 @@ def takeoff ( tel, yr, mn, dy, run=None,
             # found good block, but before this, some time skipped, print a warning
             tea(rep_f, rep_war( skip=int((clock_now - skip_begin) * 60),
                 skipbegin=util.hour2str(skip_begin),
-                clock=util.hour2str(clock_now), lst=util.hour2str(lst_now()) ))
+                clock=util.hour2str(clock_now), lst=util.hour2str(lst_now) ))
             sum_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(skip_begin), sn=0,
                 bn="SKIP!!!", ra=0.0, de=0.0, airm=0.0,
-                lst=util.hour2str(lst_now()), btime=int(int((clock_now - skip_begin) * 3600)) ))
+                lst=util.hour2str(lst_now), btime=int(int((clock_now - skip_begin) * 3600)) ))
             skip_count += 1
             skip_total += clock_now - skip_begin
             skip_begin = None
 
         # add 2nd condition, dec <= min dec + 4
-        minde = bde[ix_1].min()
-        ix_2 = np.where((airm < airmass_limit) & (airm > airmass_lbound) &
-                        ((ha < ha_limit) | (ha > 24.0 - ha_limit)) &
-                        (bde <= minde + 4.0))
+        ix_2 = np.where((airm < airmass_limit) & (airm > airmass_lbound) & (np.abs(ha) < ha_limit) &
+                        (bde <= bde[ix_1].min() + 4.0))
 
         # make key for each block, key = airmass rank + ra rank + de rank
         airm_2, ha_2 = airm[ix_2], ha[ix_2]
         bra_2, bde_2, bname_2 = bra[ix_2], bde[ix_2], bname[ix_2]
-        if lst_now() < 5.0 or 19.0 < lst_now() :
-            bra_2[np.where(bra_2 > 180.0)] -= 360.0
         # key formular is MOST important
-        key_2 = rank(airm_2) + rank(bra_2) + rank(bde_2)
+        #if lst_now < 5.0 or 19.0 < lst_now :  # use ha instead of ra, ha is already 360 moded
+        #    bra_2[np.where(bra_2 > 180.0)] -= 360.0
+        #key_2 = rank(airm_2) + rank(bra_2) + rank(bde_2)
+        key_2 = rank(airm_2) + rank(-ha_2) + rank(bde_2)
         # choose the best block
         ix_best = key_2.argmin() # the best block
         bname_best = bname_2[ix_best]
@@ -309,26 +315,28 @@ def takeoff ( tel, yr, mn, dy, run=None,
             f.tag = 0x07  # use this code, when clean candidate, it will be back to 3
 
         # generate a check file about selection
-        # check file, list blocks: name, ra, dec, fields, airmass, rank
-        chk_fn = chk_fn_fmt(path=daypath, mjd=mjd18, sn=block_sn, bname=bname_best)
-        with open(chk_fn, "w") as chk_f :
-            chk_f.write(chk_tit)
-            i = 0
-            for s in key_2.argsort() :
-                i += 1
-                b = newblock[bname_2[s]]
-                chk_f.write(chk_fmt(ord=i, bn=b.bname, ra=b.ra, de=b.de, airm=airm_2[s], ha=ha_2[s], key=key_2[s], other="*"))
-            #for b in range(len(newblock)) :
-            #    chk_f.write(chk_fmt(ord=0, bn=bname[b], ra=bra[b], de=bde[b],
-            #        airm=airm[b], ha=ha[b], key=0.0, other="*" if b in ix_2[0] else " "))
+        if check :
+            # check file, list blocks: name, ra, dec, fields, airmass, rank
+            chk_fn = chk_fn_fmt(path=daypath, mjd=mjd18, sn=block_sn, bname=bname_best)
+            with open(chk_fn, "w") as chk_f :
+                chk_f.write(chk_tit)
+                i = 0
+                for s in key_2.argsort() :
+                    i += 1
+                    b = newblock[bname_2[s]]
+                    chk_f.write(chk_fmt(ord=i, bn=b.bname, ra=b.ra, de=b.de, airm=airm_2[s], ha=ha_2[s], key=key_2[s], other="*"))
+                #for b in range(len(newblock)) :
+                #    chk_f.write(chk_fmt(ord=0, bn=bname[b], ra=bra[b], de=bde[b],
+                #        airm=airm[b], ha=ha[b], key=0.0, other="*" if b in ix_2[0] else " "))
 
-        # plot a check map
-        plotmap.plotmap(ara, ade, np.array([f.tag for f in afields]),
-            title=tel+" "+daystr+" "+util.hour2str(clock_now),
-            pngfile=see_fn_fmt(path=daypath, mjd=mjd18, sn=block_sn, bname=bname_best),
-            mpos=(mpos.ra, mpos.dec),
-            spos=(spos.ra, spos.dec),
-            zenith=(lst_now() * 15.0, site.lat) )
+            # plot a check map
+            plotmap.plotmap(ara, ade, np.array([f.tag for f in afields]),
+                title=tel+" "+daystr+" "+util.hour2str(clock_now),
+                pngfile=see_fn_fmt(path=daypath, mjd=mjd18, sn=block_sn, bname=bname_best),
+                mpos=(mpos.ra, mpos.dec),
+                spos=(spos.ra, spos.dec),
+                zenith=(lst_now * 15.0, site.lat) )
+
         # clear candidate
         for b in bname_2 :
             for f in newblock[b].fields :
@@ -339,29 +347,34 @@ def takeoff ( tel, yr, mn, dy, run=None,
         block_time = 0  # time cost for this block, in seconds
         with open(scr_fn, "w") as scr_f :
             # script: plan loop, field loop, do only factor < 1
-            for p in plancode :
-                if plans[p].active :
-                    for f in block_best.fields :
-                        factor_work = 1.0 - f.factor[p]
-                        nrepeat = int(np.ceil(factor_work / plans[p].factor))
-                        for i in range(nrepeat) :
-                            scr = scr_fmt(e=schdutil.exposure_info.make(plans[p], f))
-                            scr_f.write(scr)
-                            plan_f.write(scr)
-                            if simulate :
-                                sim_f.write("{}\n".format(schdutil.check_info.simulate(plans[p], f)))
-                            block_time += plans[p].expt + site.inter
-                            exp_count += 1
+            for p in active_plans :
+                for f in block_best.fields :
+                    factor_work = 1.0 - f.factor[p]
+                    nrepeat = int(np.ceil(factor_work / plans[p].factor))
+                    for i in range(nrepeat) :
+                        if max(abs(util.angle_dis(lra, f.ra)), abs(lde - f.de)) > 15 :
+                            plan_f.write("\n") # a mark about big move, for bok not for xao
+                        scr = scr_fmt(e=schdutil.exposure_info.make(plans[p], f))
+                        scr_f.write(scr)
+                        plan_f.write(scr)
+                        if simulate :
+                            sim_f.write("{}\n".format(schdutil.check_info.simulate(plans[p], f)))
+                        block_time += plans[p].expt + site.inter
+                        clock_field = clock_now + block_time / 3600.0
+                        am = f.airmass(site.lat, lst_clock(clock_field))
+                        exp_airmass.append(am)
+                        sumf_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(clock_field), sn=block_sn,
+                            bn=f.id, ra=f.ra, de=f.de, airm=am,
+                            lst=util.hour2str(lst_clock(clock_field)), btime=int(plans[p].expt + site.inter) ))
         plan_f.write("\n")  # write a blank line to seperate blocks
 
         # report & summary
         tea(rep_f, rep_fmt( sn=block_sn,
             bn=bname_best, ra=block_best.ra, de=block_best.de, airm=airm_2[ix_best],
-            clock=util.hour2str(clock_now), lst=util.hour2str(lst_now()), btime=int(block_time) ))
-        sum_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(clock_now), sn=block_sn,
+            clock=util.hour2str(clock_now), lst=util.hour2str(lst_now), btime=int(block_time) ))
+        sumb_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(clock_now), sn=block_sn,
             bn=bname_best, ra=block_best.ra, de=block_best.de, airm=airm_2[ix_best],
-            lst=util.hour2str(lst_now()), btime=int(block_time) ))
-        b_airmass.append(airm_2[ix_best])
+            lst=util.hour2str(lst_now), btime=int(block_time) ))
 
         # remove used block from newblock
         del newblock[bname_best]
@@ -373,27 +386,29 @@ def takeoff ( tel, yr, mn, dy, run=None,
         # found good block, but before this, some time skipped, print a warning
         tea(rep_f, rep_war( skip=int((clock_now - skip_begin) * 60),
             skipbegin=util.hour2str(skip_begin),
-            clock=util.hour2str(clock_now), lst=util.hour2str(lst_now()) ))
+            clock=util.hour2str(clock_now), lst=util.hour2str(lst_clock(clock_now)) ))
         sum_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(skip_begin), sn=0,
             bn="SKIP!!!", ra=0.0, de=0.0, airm=0.0,
-            lst=util.hour2str(lst_now()), btime=int(int((clock_now - skip_begin) * 3600)) ))
+            lst=util.hour2str(lst_clock(clock_now)), btime=int(int((clock_now - skip_begin) * 3600)) ))
         skip_count += 1
         skip_total += clock_now - skip_begin
         skip_begin = None
 
     ######################################################################################
 
-    sum_f.close()
+    sumb_f.close()
+    sumf_f.close()
     if simulate:
         sim_f.close()
 
     # total of schedule
     tea(rep_f, util.msgbox([
         "Total {b} blocks, {e} exposures, {t} costed. From {s} to {f}".format(
-            b=block_sn, e=exp_count, t=util.hour2str(clock_now-obs_begin),
+            b=block_sn, e=len(exp_airmass), t=util.hour2str(clock_now-obs_begin),
             s=util.hour2str(obs_begin), f=util.hour2str(clock_now)),
         "Estimate airmass: {me:5.3f}+-{st:5.3f}, range: {mi:4.2f} -> {ma:4.2f}".format(
-            me=np.mean(b_airmass), st=np.std(b_airmass), mi=np.min(b_airmass), ma=np.max(b_airmass)),
+            me=np.mean(exp_airmass), st=np.std(exp_airmass),
+            mi=np.min(exp_airmass), ma=np.max(exp_airmass)),
         "SKIP: {sc} sessions encounted, {st} time wasted.".format(
             sc=skip_count, st=util.hour2str(skip_total)) ],
         title="Summary") )
@@ -422,7 +437,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
 if __name__ == "__main__" :
     if len(sys.argv) < 4 :
         print ("""Syntax:
-    python takeoff.py tel year month day [run] [overwrite] [simulate]
+    python takeoff.py tel year month day [run] [overwrite] [simulate] [check]
         tel: 3 letter code of telescope, we now have bok and xao
         year: 4 digit year
         month: month, 1-12
@@ -430,17 +445,20 @@ if __name__ == "__main__" :
         run: code of run, if not yyyymm format
         overwrite: anything to present overwrite
         simulate: simulate observation results
+        check: generate check files
     """)
     else :
-        ov, si = False, False
+        ov, si, ch = False, False, False
         for a in sys.argv :
             if a.lower().startswith("over") :
                 ov = True
             elif a.lower().startswith("simu") :
                 si = True
+            elif a.lower().startswith("check") :
+                ch = True
         if len(sys.argv) > 5 :
             run = sys.argv[5]
         else :
             run = None
         takeoff(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), run,
-                overwrite=ov, simulate=si)
+                overwrite=ov, simulate=si, check=ch)

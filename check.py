@@ -11,6 +11,7 @@
 import os
 import sys
 import util
+import schdutil
 import headerinfo
 
 
@@ -60,7 +61,7 @@ if __name__ =="__main__" :
     argv = sys.argv
     if len(sys.argv) < 5 :
         print ("""Syntax:
-    python check.py tel run day
+    python check.py tel run year month day
         tel: 3 letter code of telescope, we now have bok and xao
         year: 4-digit year
         month: month number, 1 to 12

@@ -16,7 +16,7 @@ import astropy.time
 import numpy as np
 
 
-class position :
+class position (object) :
     """ A simple class holding the ra, dec, and distance
     """
 

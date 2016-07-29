@@ -98,6 +98,19 @@ def hour2str ( hr, delimiter=":" ) :
     return s
 
 
+def angle_dis (a1, a2, factor=1.0) :
+    """ Get distance between angles, around 360-degree bound
+    args:
+        a1: angle 1, scalar or ndarray
+        a2: angle 2, scalar or ndarray, if both a1 and a2 are ndarray, they must have same shape
+        factor: a shrink factor, usually is 1.0/cos(dec) or 1.0/cos(lat)
+    returns:
+        distance between a1 and a2
+    """
+    d = ((a1 - a2 + 180.0) % 360.0 - 180.0) * factor
+    return d
+
+
 def sxpar ( header, key, default=None ) :
     """ Check weather the key is in header, if yes, return value, else return default
     args:

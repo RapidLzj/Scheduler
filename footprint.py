@@ -18,7 +18,7 @@ import schdutil
 
 
 def footprint ( tel, reportfile=None, equfile=None, galfile=None,
-                run=None, day=None, plan=None, before=False ) :
+                run=None, day=None, before=False ) :
     """ Draw footprint of survey
     args:
         tel: telescope brief code
@@ -28,7 +28,6 @@ def footprint ( tel, reportfile=None, equfile=None, galfile=None,
         galfile: output file name for Galactic System
         run: code of run to be marked, usually as yyyymm format
         day: mjd of date to be marked, must be present with run
-        plan: plan code to draw
         before: draw covered bofore specified run or day
     """
     # set default output file
@@ -45,12 +44,6 @@ def footprint ( tel, reportfile=None, equfile=None, galfile=None,
     fields = schdutil.load_field(tel)
     plancode = plans.keys()
     plancode.sort()
-    if plan is not None and plan not in plancode :
-        plan = None
-    if plan is not None :
-        planname = plans[plan].name
-    else :
-        planname = ""
 
     # find all obsed file
     obsedlist = schdutil.ls_files("{tel}/obsed/*/obsed.J*.lst".format(tel=tel))
@@ -107,11 +100,11 @@ def footprint ( tel, reportfile=None, equfile=None, galfile=None,
         equf = moll(lat_range=(-5,88))
         equf.grid(lat_lab_lon=0, lon_lab_lat=-5, lat_step=10)
         equf.scatter(ra0, de0, "k,", label="Future {}".format(n0))
-        equf.scatter(ra1, de1, "b.", label="Done {}".format(n1+n3))
+        equf.scatter(ra1, de1, "bs", label="Done {}".format(n1+n3))
         if marktext is not None :
-            equf.scatter(ra3, de3, "r.", label="{} {}".format(marktext, n3))
+            equf.scatter(ra3, de3, "rs", label="{} {}".format(marktext, n3))
         plt.legend()
-        plt.title("{tel} {plan} Footprint in Equatorial System".format(tel=tel, plan=planname))
+        plt.title("{tel} Footprint in Equatorial System".format(tel=tel))
         plt.savefig(equfile)
         plt.close()
 
@@ -119,11 +112,11 @@ def footprint ( tel, reportfile=None, equfile=None, galfile=None,
         galf = moll()
         galf.grid(lat_lab_lon=0, lon_lab_lat=-5)
         galf.scatter(gl0, gb0, "k,", label="Future {}".format(n0))
-        galf.scatter(gl1, gb1, "b.", label="Done {}".format(n1+n3))
+        galf.scatter(gl1, gb1, "bs", label="Done {}".format(n1+n3))
         if marktext is not None :
-            galf.scatter(gl3, gb3, "r.", label="{} {}".format(marktext, n3))
+            galf.scatter(gl3, gb3, "rs", label="{} {}".format(marktext, n3))
         plt.legend()
-        plt.title("{tel} {plan} Footprint in Galactic System".format(tel=tel, plan=planname))
+        plt.title("{tel} Footprint in Galactic System".format(tel=tel))
         plt.savefig(galfile)
         plt.close()
 
@@ -131,15 +124,14 @@ def footprint ( tel, reportfile=None, equfile=None, galfile=None,
 if __name__ =="__main__" :
     if len(sys.argv) < 2 :
         print ("""Syntax:
-    python footprint.py tel [Ttextfile] [Eequfile] [Ggalfile] [Rrun] [Dday] [Pplan] [B]
+    python footprint.py tel [Ttextfile] [Eequfile] [Ggalfile] [Rrun] [Dday] [B]
         tel: 3 letter code of telescope, we now have bok and xao
-        textfile: output text report file
-        equfile: output file name for Equatorial System
-        galfile: output file name for Galactic System
-        run: code of run, usually as yyyymm format
-        day: modified Julian day of the date, 4 digit, JD-2450000.5
-        plan: plan code to draw
-        before: draw covered bofore specified run or day
+        T+textfile: output text report file
+        E+equfile: output file name for Equatorial System
+        G+galfile: output file name for Galactic System
+        R+run: code of run, usually as yyyymm format
+        D+day: modified Julian day of the date, 4 digit, JD-2450000.5
+        B before: draw covered bofore specified run or day
         for optional argument, need a leading capital E, G, R, D or P, B
     """)
     else :
@@ -151,8 +143,6 @@ if __name__ =="__main__" :
                 run = a[1:]
             elif a.startswith("D") :
                 day = int(a[1:])
-            elif a.startswith("P") :
-                plan = int(a[1:])
             elif a.startswith("E") :
                 equfile = a[1:]
             elif a.startswith("T") :
@@ -161,6 +151,6 @@ if __name__ =="__main__" :
                 galfile = a[1:]
             elif a.startswith("B") :
                 before = True
-        print txtfile, equfile, galfile, run, day, plan, before
+        print txtfile, equfile, galfile, run, day, before
         footprint(sys.argv[1], run=run, day=day, plan=plan, before=before,
                   reportfile=txtfile, equfile=equfile, galfile=galfile)
