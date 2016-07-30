@@ -13,6 +13,7 @@ import sys
 import time
 import util
 import schdutil
+import sky
 
 
 def collect ( tel, yr, mn, dy, run=None ) :
@@ -25,7 +26,7 @@ def collect ( tel, yr, mn, dy, run=None ) :
         run: run code, default is `yyyymm`
     """
     site = schdutil.load_basic(tel)
-    mjd18 = schdutil.mjd_of_night(yr, mn, dy, site)
+    mjd18 = sky.mjd_of_night(yr, mn, dy, site)
     if run is None :
         run = "{year:04d}{month:02d}".format(year=yr, month=mn)
     # search check filenames

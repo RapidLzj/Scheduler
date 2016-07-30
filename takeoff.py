@@ -17,7 +17,7 @@ from myPyLib.Mollweide import moll
 from matplotlib import pyplot as plt
 import util
 import schdutil
-import moon
+import sky
 import plotmap
 import collect
 
@@ -66,15 +66,15 @@ def takeoff ( tel, yr, mn, dy, run=None,
 
     # night parameters
     # mjd of 18:00 of site timezone, as code of tonight
-    mjd18 = schdutil.mjd_of_night(yr, mn, dy, site)
+    mjd18 = sky.mjd_of_night(yr, mn, dy, site)
     # mjd of local midnight, as calculate center
-    mjd24 = schdutil.mjd(yr, mn, dy, 24 - site.lon / 15.0, 0, 0,  0)
+    mjd24 = sky.mjd(yr, mn, dy, 24 - site.lon / 15.0, 0, 0,  0)
     tmjd24 = Time(mjd24, format="mjd")
     # night length (hour)
-    night_len = schdutil.night_len(mjd24, site.lat)
+    night_len = sky.night_len(mjd24, site.lat)
     dark_len = night_len - 2.5  # assume twilight 1.25 hours
     # local sidereal time of midnight
-    lst24 = schdutil.fmst (yr, mn, dy, site.lon)
+    lst24 = sky.fmst (yr, mn, dy, site.lon)
     #lst24 = tmjd24.sidereal_time("mean", site.lon).hour
     # timezone correction: between local time and timezone standard time
     tzcorr = site.tz - site.lon / 15.0
@@ -90,10 +90,10 @@ def takeoff ( tel, yr, mn, dy, run=None,
     else :
         if obs_end < 12.0 : obs_end += 24
     # moon position at midnight, as mean coord to calculate moon-object distance
-    mpos = moon.moon_pos(mjd24) #astropy.coordinates.get_moon(tmjd24)
-    mphase = moon.moon_phase(mjd24)
+    mpos = sky.moon_pos(mjd24) #astropy.coordinates.get_moon(tmjd24)
+    mphase = sky.moon_phase(mjd24)
     # sun position at midnight
-    spos = moon.sun_pos(mjd24) #astropy.coordinates.get_sun(tmjd24)
+    spos = sky.sun_pos(mjd24) #astropy.coordinates.get_sun(tmjd24)
 
     ######################################################################################
 
@@ -143,10 +143,10 @@ def takeoff ( tel, yr, mn, dy, run=None,
     ade = np.array([f.de for f in afields])
 
     # mark fields near moon and sun
-    moon_dis = moon.distance(mpos.ra, mpos.dec, ara, ade)
+    moon_dis = sky.distance(mpos.ra, mpos.dec, ara, ade)
     for f in afields[np.where(moon_dis < moon_dis_limit)]:
         f.tag |= 0x10
-    sun_dis = moon.distance(spos.ra, spos.dec, ara, ade)
+    sun_dis = sky.distance(spos.ra, spos.dec, ara, ade)
     for f in afields[np.where(sun_dis < 60)]:
         f.tag |= 0x10
     atag = np.array([f.tag for f in afields])
@@ -213,18 +213,18 @@ def takeoff ( tel, yr, mn, dy, run=None,
         tea(rep_f, "Simulation file: " + simu_check_fn)
 
     # format of output
-    rep_tit = "{sn:2}   {bn:^7} ({ra:^9} {de:^9}) {airm:4} @ {clock:5} [{lst:^5}] {btime:>5}".format(
-        sn="No", bn="Block", ra="RA", de="Dec", airm="Airm", clock="Time", lst="LST", btime="Cost")
-    rep_fmt = "{sn:02}: #{bn:7} ({ra:9.5f} {de:+9.5f}) {airm:4.2f} @ {clock:5} [{lst:5}] {btime:>4d}s".format
+    rep_tit = "{clock:5} [{lst:^5}]  {sn:2} | {bn:^7} ({ra:^9} {de:^9}) | {airm:4} {az:>5} {alt:>5} | {btime:>5}".format(
+        sn="No", bn="Block", ra="RA", de="Dec", airm="Airm", clock="Time", lst="LST", az="Az", alt="Alt", btime="Cost")
+    rep_fmt = "{clock:5} [{lst:5}] #{sn:02} | {bn:7} ({ra:9.5f} {de:+9.5f}) | {airm:4.2f} {az:5.1f} {alt:+5.1f} | {btime:>4d}s".format
     rep_war = "**:  {skip:>7} minutes SKIPPED !! {skipbegin:5} ==> {clock:5} [{lst:5}]".format
 
-    sum_tit = "#{mjd:3} {clock:5} {sn:>2} {bn:^7} {ra:^9} {de:^9} {airm:4} {lst:^5} {btime:>4}\n".format(
-        mjd="MJD", clock="Time", sn="No", bn="Object", ra="RA", de="Dec", airm="Airm", lst="LST", btime="Cost")
-    sum_fmt = "{mjd:04d} {clock:5s} {sn:02d} {bn:7} {ra:9.5f} {de:+9.5f} {airm:4.2f} {lst:5s} {btime:>4d}\n".format
+    sum_tit = "#{mjd:3} {clock:5} {lst:^5} {sn:>2} {bn:^7} {ra:^9} {de:^9} {airm:4} {az:>5} {alt:>5} {btime:>4}\n".format(
+        mjd="MJD", clock="Time", lst="LST", sn="No", bn="Object", ra="RA", de="Dec", airm="Airm", az="Az", alt="Alt", btime="Cost")
+    sum_fmt = "{mjd:04d} {clock:5.2f} {lst:5.2f} {sn:2d} {bn:7} {ra:9.5f} {de:+9.5f} {airm:4.2f} {az:5.1f} {alt:+5.1f} {btime:>4d}\n".format
 
-    chk_fmt = "{ord:03d} {bn:7s} ({ra:9.5f} {de:+9.5f}) {airm:4.2f} {ha:5.2f} {key:>5.1f} {other}\n".format
-    chk_tit = "#{ord:>2} {bn:^7} ({ra:>9} {de:>9}) {airm:>4} {ha:5} {key:>5} {other}\n".format(
-                ord="No",bn="Block", ra="RA", de="Dec", airm="Airm", ha="HA", key="Key", other="Other")
+    chk_fmt = "{ord:03d} {bn:7s} ({ra:9.5f} {de:+9.5f}) {airm:4.2f} {ha:5.2f} {az:5.1f} {alt:+5.1f} {key:>5.1f} {other}\n".format
+    chk_tit = "#{ord:>2} {bn:^7} ({ra:>9} {de:>9}) {airm:>4} {ha:5} {az:>5} {alt:>5} {key:>5} {other}\n".format(
+                ord="No",bn="Block", ra="RA", de="Dec", airm="Airm", ha="HA", az="Az", alt="Alt", key="Key", other="Other")
 
     scr_fmt = (site.fmt + "\n").format
 
@@ -264,7 +264,8 @@ def takeoff ( tel, yr, mn, dy, run=None,
         blst = lst_now + plan_time * bsize / 2.0
         # calculate airmass for all available block
         ha = util.angle_dis(blst * 15.0, bra) / 15.0
-        airm = schdutil.airmass(site.lat, blst, bra, bde)
+        airm = sky.airmass(site.lat, blst, bra, bde)
+        baz, balt = sky.azalt(site.lat, blst, bra, bde)
 
         # keep blocks with airm < airmlimit & hour angle < ha_limit, and then dec < min dec + 4 deg
         ix_1 = np.where((airm < airmass_limit) & (airm > airmass_lbound) & (np.abs(ha) < ha_limit))
@@ -282,7 +283,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
                 skipbegin=util.hour2str(skip_begin),
                 clock=util.hour2str(clock_now), lst=util.hour2str(lst_now) ))
             sum_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(skip_begin), sn=0,
-                bn="SKIP!!!", ra=0.0, de=0.0, airm=0.0,
+                bn="SKIP!!!", ra=0.0, de=0.0, airm=0.0, az=0.0, alt=0.0,
                 lst=util.hour2str(lst_now), btime=int(int((clock_now - skip_begin) * 3600)) ))
             skip_count += 1
             skip_total += clock_now - skip_begin
@@ -294,6 +295,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
 
         # make key for each block, key = airmass rank + ra rank + de rank
         airm_2, ha_2 = airm[ix_2], ha[ix_2]
+        baz_2, balt_2 = baz[ix_2], balt[ix_2]
         bra_2, bde_2, bname_2 = bra[ix_2], bde[ix_2], bname[ix_2]
         # key formular is MOST important
         #if lst_now < 5.0 or 19.0 < lst_now :  # use ha instead of ra, ha is already 360 moded
@@ -324,7 +326,8 @@ def takeoff ( tel, yr, mn, dy, run=None,
                 for s in key_2.argsort() :
                     i += 1
                     b = newblock[bname_2[s]]
-                    chk_f.write(chk_fmt(ord=i, bn=b.bname, ra=b.ra, de=b.de, airm=airm_2[s], ha=ha_2[s], key=key_2[s], other="*"))
+                    chk_f.write(chk_fmt(ord=i, key=key_2[s], bn=b.bname, ra=b.ra, de=b.de,
+                                az=baz_2[s], alt=balt_2[s], airm=airm_2[s], ha=ha_2[s], other="*"))
                 #for b in range(len(newblock)) :
                 #    chk_f.write(chk_fmt(ord=0, bn=bname[b], ra=bra[b], de=bde[b],
                 #        airm=airm[b], ha=ha[b], key=0.0, other="*" if b in ix_2[0] else " "))
@@ -352,7 +355,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
                     factor_work = 1.0 - f.factor[p]
                     nrepeat = int(np.ceil(factor_work / plans[p].factor))
                     for i in range(nrepeat) :
-                        if max(abs(util.angle_dis(lra, f.ra)), abs(lde - f.de)) > 15 :
+                        if max(abs(util.angle_dis(lra, f.ra)), abs(lde - f.de)) > 15.0 :
                             plan_f.write("\n") # a mark about big move, for bok not for xao
                         scr = scr_fmt(e=schdutil.exposure_info.make(plans[p], f))
                         scr_f.write(scr)
@@ -361,20 +364,24 @@ def takeoff ( tel, yr, mn, dy, run=None,
                             sim_f.write("{}\n".format(schdutil.check_info.simulate(plans[p], f)))
                         block_time += plans[p].expt + site.inter
                         clock_field = clock_now + block_time / 3600.0
-                        am = f.airmass(site.lat, lst_clock(clock_field))
-                        exp_airmass.append(am)
-                        sumf_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(clock_field), sn=block_sn,
-                            bn=f.id, ra=f.ra, de=f.de, airm=am,
-                            lst=util.hour2str(lst_clock(clock_field)), btime=int(plans[p].expt + site.inter) ))
-        plan_f.write("\n")  # write a blank line to seperate blocks
+                        fairm = f.airmass(site.lat, lst_clock(clock_field))
+                        faz, falt = f.azalt(site.lat, lst_clock(clock_field))
+                        exp_airmass.append(fairm)
+                        sumf_f.write(sum_fmt(mjd=mjd18, clock=clock_field, sn=block_sn,
+                            bn=f.id, ra=f.ra, de=f.de, airm=fairm, az=faz, alt=falt,
+                            lst=lst_clock(clock_field), btime=int(plans[p].expt + site.inter) ))
+                        lra, lde = f.ra, f.de
+        #plan_f.write("\n")  # write a blank line to seperate blocks
 
         # report & summary
         tea(rep_f, rep_fmt( sn=block_sn,
             bn=bname_best, ra=block_best.ra, de=block_best.de, airm=airm_2[ix_best],
+            az=baz_2[ix_best], alt=balt_2[ix_best],
             clock=util.hour2str(clock_now), lst=util.hour2str(lst_now), btime=int(block_time) ))
-        sumb_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(clock_now), sn=block_sn,
+        sumb_f.write(sum_fmt(mjd=mjd18, clock=clock_now, sn=block_sn,
             bn=bname_best, ra=block_best.ra, de=block_best.de, airm=airm_2[ix_best],
-            lst=util.hour2str(lst_now), btime=int(block_time) ))
+            az=baz_2[ix_best], alt=balt_2[ix_best],
+            lst=lst_now, btime=int(block_time) ))
 
         # remove used block from newblock
         del newblock[bname_best]
@@ -388,7 +395,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
             skipbegin=util.hour2str(skip_begin),
             clock=util.hour2str(clock_now), lst=util.hour2str(lst_clock(clock_now)) ))
         sum_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(skip_begin), sn=0,
-            bn="SKIP!!!", ra=0.0, de=0.0, airm=0.0,
+            bn="SKIP!!!", ra=0.0, de=0.0, airm=0.0, az=0.0, alt=0.0,
             lst=util.hour2str(lst_clock(clock_now)), btime=int(int((clock_now - skip_begin) * 3600)) ))
         skip_count += 1
         skip_total += clock_now - skip_begin

@@ -8,7 +8,7 @@
 
 
 import numpy as np
-from myPyLib.Mollweide import moll
+from Mollweide import moll
 from matplotlib import pyplot as plt
 import util
 import schdutil

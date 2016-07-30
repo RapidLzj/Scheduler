@@ -12,6 +12,7 @@ import os
 import sys
 import util
 import schdutil
+import sky
 import headerinfo
 
 
@@ -25,7 +26,7 @@ def check ( tel, yr, mn, dy, run=None ) :
         run: run code, default is `yyyymm`
     """
     site = schdutil.load_basic(tel)
-    mjd18 = schdutil.mjd_of_night(yr, mn, dy, site)
+    mjd18 = sky.mjd_of_night(yr, mn, dy, site)
     if run is None :
         run = "{year:04d}{month:02d}".format(year=yr, month=mn)
     # input and output filename
