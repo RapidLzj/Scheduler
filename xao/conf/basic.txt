@@ -4,6 +4,7 @@
  +8           # Site Timezone
  50           # Extra time before and after exposure, for ex pointing and readout
  1.0          # Field size of view (degree)
+90.0          # big move
 SAGE  sage_survey  {e.obj:>8}  OBJECT  {e.ras:11}  {e.des:11}  J2000  {e.expti:3}  0  1  {e.filter:>8} 2 1 Medium
 # Script format template
 # script template fields available

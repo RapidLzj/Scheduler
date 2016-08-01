@@ -13,8 +13,8 @@ import sys
 import numpy as np
 from astropy.time import Time
 import astropy.coordinates
-from myPyLib.Mollweide import moll
-from matplotlib import pyplot as plt
+#from myPyLib.Mollweide import moll
+#from matplotlib import pyplot as plt
 import util
 import schdutil
 import sky
@@ -30,6 +30,10 @@ def tea ( rep_file, rep_info ) :
     """
     rep_file.write(rep_info + "\n")
     print (rep_info)
+
+
+def stdscore (x) :
+    return (x - min(x)) / (max(x) - min(x))
 
 
 def takeoff ( tel, yr, mn, dy, run=None,
@@ -58,35 +62,41 @@ def takeoff ( tel, yr, mn, dy, run=None,
 	# all var starts with `rep_` contains report info
     rep_start_time = Time.now()
 
+    if not os.path.isdir(tel) or not os.path.isfile(tel+"/conf/basic.txt") :
+        print (util.msgbox(["Telescope `{tel}` does NOT EXIST!!".format(tel=tel)],
+                            title="ERROR", border="*"))
+        return
+
     # load site and telescope basic data
     site = schdutil.load_basic(tel)
 
     # airmass lower limit, set this to avoid zenith
     airmass_lbound = 1.005  # about 84 deg
+    twi_alt = -15.0 # twilight altitude of sun
 
     # night parameters
     # mjd of 18:00 of site timezone, as code of tonight
     mjd18 = sky.mjd_of_night(yr, mn, dy, site)
     # mjd of local midnight, as calculate center
     mjd24 = sky.mjd(yr, mn, dy, 24 - site.lon / 15.0, 0, 0,  0)
-    tmjd24 = Time(mjd24, format="mjd")
-    # night length (hour)
-    night_len = sky.night_len(mjd24, site.lat)
-    dark_len = night_len - 2.5  # assume twilight 1.25 hours
     # local sidereal time of midnight
-    lst24 = sky.fmst (yr, mn, dy, site.lon)
-    #lst24 = tmjd24.sidereal_time("mean", site.lon).hour
+    lst24 = sky.lst(mjd24, site.lon)
     # timezone correction: between local time and timezone standard time
     tzcorr = site.tz - site.lon / 15.0
     # observation start and end time, in timezone time
-    sunset_time, sunrise_time = 24 + tzcorr - night_len / 2, 24 + tzcorr + night_len / 2
+    sunset_mjd, sunrise_mjd = sky.sun_action (mjd24, lst24, site.lat, 0.0)
+    twi_begin_mjd, twi_end_mjd = sky.sun_action (mjd24, lst24, site.lat, twi_alt)
+    sunset_hour    = sky.mjd2hour(sunset_mjd, site.tz)
+    sunrise_hour   = sky.mjd2hour(sunrise_mjd, site.tz) + 24.0
+    twi_begin_hour = sky.mjd2hour(twi_begin_mjd, site.tz)
+    twi_end_hour   = sky.mjd2hour(twi_end_mjd, site.tz) + 24.0
     # if obs time is given, use given time
     if obs_begin is None :
-        obs_begin = 24 + tzcorr - dark_len / 2
+        obs_begin = twi_begin_hour
     else :
         if obs_begin < 12.0 : obs_begin += 24
     if obs_end is None :
-        obs_end = 24 + tzcorr + dark_len / 2
+        obs_end = twi_end_hour
     else :
         if obs_end < 12.0 : obs_end += 24
     # moon position at midnight, as mean coord to calculate moon-object distance
@@ -173,10 +183,10 @@ def takeoff ( tel, yr, mn, dy, run=None,
 
     # show prepare message
     tea(rep_f, util.msgbox([
-        "## {tel}, on {days} (J{mjd:04}) of run {run}".
+        "## {tel}, on {days} (J{mjd:04}) of run `{run}`".
             format(tel=tel,days=daystr,mjd=mjd18, run=run),
         "Sun set at {s:5}, rise at {r:5}, obs time is {os:5} ==> {oe:5}".
-            format( s=util.hour2str(sunset_time),  r=util.hour2str(sunrise_time-24.0),
+            format( s=util.hour2str(sunset_hour),  r=util.hour2str(sunrise_hour-24.0),
                    os=util.hour2str(obs_begin), oe=util.hour2str(obs_end-24.0)),
         "Obs hours is {ol:5}, LST of midnight is {mst:5}".
             format(ol=util.hour2str(obs_end-obs_begin), mst=util.hour2str(lst24)),
@@ -243,6 +253,8 @@ def takeoff ( tel, yr, mn, dy, run=None,
     skip_total = 0.0
     exp_airmass = [] # collect airmass
     lra, lde = 999.99, 99.99 # last field ra, dec
+    jump = 0
+    keyweight = [1, 1, 1]
     # time need of a full round for a field
     plan_time = sum([(plans[p].expt + site.inter) * plans[p].repeat for p in active_plans]) / 3600.0
 
@@ -298,10 +310,10 @@ def takeoff ( tel, yr, mn, dy, run=None,
         baz_2, balt_2 = baz[ix_2], balt[ix_2]
         bra_2, bde_2, bname_2 = bra[ix_2], bde[ix_2], bname[ix_2]
         # key formular is MOST important
-        #if lst_now < 5.0 or 19.0 < lst_now :  # use ha instead of ra, ha is already 360 moded
-        #    bra_2[np.where(bra_2 > 180.0)] -= 360.0
-        #key_2 = rank(airm_2) + rank(bra_2) + rank(bde_2)
+        ############################################################
         key_2 = rank(airm_2) + rank(-ha_2) + rank(bde_2)
+        #key_2 = stdscore(airm_2) * keyweight[0] + stdscore(-ha_2) * keyweight[1] + stdscore(bde_2) * keyweight[2]
+        ############################################################
         # choose the best block
         ix_best = key_2.argmin() # the best block
         bname_best = bname_2[ix_best]
@@ -355,14 +367,16 @@ def takeoff ( tel, yr, mn, dy, run=None,
                     factor_work = 1.0 - f.factor[p]
                     nrepeat = int(np.ceil(factor_work / plans[p].factor))
                     for i in range(nrepeat) :
-                        if max(abs(util.angle_dis(lra, f.ra)), abs(lde - f.de)) > 15.0 :
+                        # output to script and simulate file
+                        if max(abs(util.angle_dis(lra, f.ra, 1.0/np.cos(np.deg2rad(lde)))), abs(lde - f.de)) > site.bmove :
                             plan_f.write("\n") # a mark about big move, for bok not for xao
+                            jump += 1
                         scr = scr_fmt(e=schdutil.exposure_info.make(plans[p], f))
                         scr_f.write(scr)
                         plan_f.write(scr)
                         if simulate :
                             sim_f.write("{}\n".format(schdutil.check_info.simulate(plans[p], f)))
-                        block_time += plans[p].expt + site.inter
+                        # summary file
                         clock_field = clock_now + block_time / 3600.0
                         fairm = f.airmass(site.lat, lst_clock(clock_field))
                         faz, falt = f.azalt(site.lat, lst_clock(clock_field))
@@ -371,6 +385,8 @@ def takeoff ( tel, yr, mn, dy, run=None,
                             bn=f.id, ra=f.ra, de=f.de, airm=fairm, az=faz, alt=falt,
                             lst=lst_clock(clock_field), btime=int(plans[p].expt + site.inter) ))
                         lra, lde = f.ra, f.de
+                        # time walking
+                        block_time += plans[p].expt + site.inter
         #plan_f.write("\n")  # write a blank line to seperate blocks
 
         # report & summary
@@ -405,9 +421,11 @@ def takeoff ( tel, yr, mn, dy, run=None,
 
     sumb_f.close()
     sumf_f.close()
+    plan_f.close()
     if simulate:
         sim_f.close()
-
+    os.system("unix2dos {}".format(plan_fn))
+    tea(rep_f, "")
     # total of schedule
     tea(rep_f, util.msgbox([
         "Total {b} blocks, {e} exposures, {t} costed. From {s} to {f}".format(
@@ -416,8 +434,9 @@ def takeoff ( tel, yr, mn, dy, run=None,
         "Estimate airmass: {me:5.3f}+-{st:5.3f}, range: {mi:4.2f} -> {ma:4.2f}".format(
             me=np.mean(exp_airmass), st=np.std(exp_airmass),
             mi=np.min(exp_airmass), ma=np.max(exp_airmass)),
-        "SKIP: {sc} sessions encounted, {st} time wasted.".format(
-            sc=skip_count, st=util.hour2str(skip_total)) ],
+        "Big move over {bmove} deg: {jump} jump(s),".format(jump=jump, bmove=site.bmove),
+        "SKIP: {sc} session(s) encounted, {st} wasted.".format(
+            sc=skip_count, st=util.hour2str(skip_total))],
         title="Summary") )
 
     # plot task map of this night

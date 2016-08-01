@@ -11,7 +11,7 @@
 import os
 import sys
 import time
-from myPyLib.Mollweide import moll
+from Mollweide import moll
 from matplotlib import pyplot as plt
 import util
 import schdutil

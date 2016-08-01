@@ -1,4 +1,4 @@
 #Code  Name  Filter  ExpT  Repeat  Factor  Active Dither1 Dither2
     0  u60   strumu    60       1     1.0  1      0.0     0.0
     1  vst   strumv    30       1     1.0  0      0.0     0.0
-    2  v40   sagev     40       1     1.0  1      0.0     0.0
+    2  v40   sagev     40       1     1.0  0      0.0     0.0

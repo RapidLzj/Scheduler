@@ -193,15 +193,15 @@ def load_basic ( tel ) :
     args:
         tel: telescope brief code
     returns:
-        dict of site basic data
-        keys: lon, lat, alt, tz, interval, fov, lons, lats
+        object of site basic data
+        keys: lon, lat, alt, tz, interval, fov, lons, lats, bmove, fmt
     """
     basicfile = "{tel}/conf/basic.txt".format(tel=tel)
     basiclines = util.read_conf(basicfile, default=[])
     nb = len(basiclines)
 
     basic = base_info(lon=-111.6, lat=+31.96, alt=2096.0, tz=-7, lons="-111:35:48", lats="31:57:30",
-                      inter=50.0, fov=0.9,
+                      inter=50.0, fov=0.9, bmove = 90.0,
                       fmt="obs   {e.expt:5.1f}  object     {e.obj:>8}  1  {e.filter:>8}  {e.rap:9}  {e.dep:9}  2000.0")
     if nb >= 1 : basic.lon   = util.dms2dec(basiclines[0]) ; basic.lons = basiclines[0]
     if nb >= 2 : basic.lat   = util.dms2dec(basiclines[1]) ; basic.lats = basiclines[1]
@@ -209,7 +209,8 @@ def load_basic ( tel ) :
     if nb >= 4 : basic.tz    =        float(basiclines[3])
     if nb >= 5 : basic.inter =        float(basiclines[4])
     if nb >= 6 : basic.fov   =        float(basiclines[5])
-    if nb >= 7 : basic.fmt   =              basiclines[6]
+    if nb >= 7 : basic.bmove =        float(basiclines[6])
+    if nb >= 8 : basic.fmt   =              basiclines[7]
 
     return basic
 
@@ -263,8 +264,8 @@ def load_field ( tel ) :
         dict of fields, key is field id, value is a field
         a field is a instance of class field_info
     """
-    expmodefile = "{tel}/conf/field.txt".format(tel=tel)
-    fieldlines = util.read_conf(expmodefile, default=None)
+    fieldfile = "{tel}/conf/field.txt".format(tel=tel)
+    fieldlines = util.read_conf(fieldfile, default=None)
 
     fields = {}
     for line in fieldlines :

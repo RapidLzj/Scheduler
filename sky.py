@@ -22,7 +22,7 @@
 
 
 import astropy.coordinates
-import astropy.time
+from astropy.time import Time
 import numpy as np
 
 
@@ -40,13 +40,13 @@ class position (object) :
 
 
 def moon_pos ( mjd ) :
-    p = astropy.coordinates.get_moon(astropy.time.Time(mjd, format="mjd"))
+    p = astropy.coordinates.get_moon(Time(mjd, format="mjd"))
     pd = position(p.ra.deg, p.dec.deg, p.distance.km)
     return pd
 
 
 def sun_pos ( mjd ) :
-    p = astropy.coordinates.get_sun(astropy.time.Time(mjd, format="mjd"))
+    p = astropy.coordinates.get_sun(Time(mjd, format="mjd"))
     pd = position(p.ra.deg, p.dec.deg, p.distance.km)
     return pd
 
@@ -130,9 +130,13 @@ def day_of_year (yr, mn, dy) :
         day number in the year
     """
     md = [0,  31, 28, 31,  30, 31, 30,  31, 31, 30,  31, 30, 31] # days in month
-    dofy = sum(md[1:mn]) + dy  # day of year
+    dofy = sum(md[0:mn]) + dy  # day of year
     if yr % 4 == 0 and mn > 2 : dofy += 1 # leap year
     return dofy
+
+
+def lst (mjd, lon) :
+    return Time(mjd, format="mjd").sidereal_time("mean", lon).hour
 
 
 def fmst (yr, mn, dy, lon) :
@@ -300,3 +304,44 @@ def mjd_of_night (yr, mn, dy, site) :
     return j
 
 
+def mjd2hour(mjd, tz=0) :
+    h = (mjd * 24.0 + tz) % 24.0
+    return h
+
+
+def sun_action (mjd24, lst24, lat, palt=0.0) :
+    """ Get time of sun pass specified altitude, in this night
+        Use grid to estimate, precise to 0.001, about 1.44 min (86.4sec)
+        Assume midnight sun is lower than palt, no polor night or polar day
+    args:
+        mjd24: mjd of midnight
+        lst24: local sidereal time of midnight. (in takeoff, this is already calculated)
+        lat: latitude of site
+        palt: altitude of sun passing, default 0, means sunset and sunrise
+    returns:
+        sunset, sunrise: tuple of mjd of sun set and rise time
+    """
+    sp = sun_pos(mjd24)
+    # backward to get sunset time
+    mjdse = mjd24
+    lstse = lst24
+    for step in (0.1, 0.01, 0.001) :
+        while True :
+            az, alt = azalt(lat, lstse - step * 24.0, sp.ra, sp.dec)
+            # when sun first time higher than palt, break, mjdse and lstse are last value under
+            if alt > palt: break
+            #print lstse, alt
+            mjdse -= step
+            lstse -= step * 24.0
+    # forward to get sunrise time
+    mjdsr = mjd24
+    lstsr = lst24
+    for step in (0.1, 0.01, 0.001) :
+        while True :
+            az, alt = azalt(lat, lstsr + step * 24.0, sp.ra, sp.dec)
+            # when sun first time higher than palt, break, mjdse and lstse are last value under
+            if alt > palt: break
+            #print lstsr, alt
+            mjdsr += step
+            lstsr += step * 24.0
+    return mjdse, mjdsr
