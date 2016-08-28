@@ -11,7 +11,7 @@
 import os
 import numpy as np
 from astropy.io import fits
-import util
+import common
 import schdutil
 
 
@@ -32,22 +32,22 @@ def headerinfo ( fitsfile ) :
     telescope = prihdr["TELESCOP"].strip()
     if telescope == "Steward 2.3 m (bok)" :
         filesn = int(fitsfile[-9:-5])
-        imgtyp = util.sxpar(prihdr, "IMAGETYP", "unknown")
-        object = util.sxpar(prihdr, "OBJECT", "unknown")
-        filter = util.sxpar(prihdr, "FILTER", "unknown")
-        expt   = float(util.sxpar(prihdr, "EXPTIME", 0.0))
-        ra  = util.hms2dec(util.sxpar(prihdr, "RA", "0"))
-        de = util.dms2dec(util.sxpar(prihdr, "DEC", "0"))
+        imgtyp = common.util.sxpar(prihdr, "IMAGETYP", "unknown")
+        object = common.util.sxpar(prihdr, "OBJECT", "unknown")
+        filter = common.util.sxpar(prihdr, "FILTER", "unknown")
+        expt   = float(common.util.sxpar(prihdr, "EXPTIME", 0.0))
+        ra = common.angle.hms2dec(common.util.sxpar(prihdr, "RA", "0"))
+        de = common.angle.dms2dec(common.util.sxpar(prihdr, "DEC", "0"))
         res = schdutil.check_info(fitsfile, filesn, imgtyp, object, filter, expt, ra, de)
 
     elif telescope == "1M-WideField" :
         filesn = int(fitsfile[-9:-5])
-        imgtyp = util.sxpar(prihdr, "OBSTYPE", "unknown")
-        object = util.sxpar(prihdr, "OBJECT", "unknown")
-        filter = util.sxpar(prihdr, "FILTER", "unknown")
-        expt   = float(util.sxpar(prihdr, "EXPTIME", 0.0))
-        ra  = float(util.sxpar(prihdr, "OBJCTRA", 0.0))
-        de = float(util.sxpar(prihdr, "OBJCTDEC", 0.0))
+        imgtyp = common.util.sxpar(prihdr, "OBSTYPE", "unknown")
+        object = common.util.sxpar(prihdr, "OBJECT", "unknown")
+        filter = common.util.sxpar(prihdr, "FILTER", "unknown")
+        expt   = float(common.util.sxpar(prihdr, "EXPTIME", 0.0))
+        ra = float(common.util.sxpar(prihdr, "OBJCTRA", 0.0))
+        de = float(common.util.sxpar(prihdr, "OBJCTDEC", 0.0))
         res = schdutil.check_info(fitsfile, filesn, imgtyp, object, filter, expt, ra, de)
 
     else :

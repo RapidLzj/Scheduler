@@ -10,13 +10,12 @@
 
 import os
 import sys
-import util
+import common
 import schdutil
-import sky
 import headerinfo
 
 
-def check ( tel, yr, mn, dy, run=None ) :
+def check (tel, yr, mn, dy, run=None) :
     """ check fits header, and generate a check list
     args:
         tel: telescope brief code
@@ -26,7 +25,7 @@ def check ( tel, yr, mn, dy, run=None ) :
         run: run code, default is `yyyymm`
     """
     site = schdutil.load_basic(tel)
-    mjd18 = sky.mjd_of_night(yr, mn, dy, site)
+    mjd18 = common.sky.mjd_of_night(yr, mn, dy, site)
     if run is None :
         run = "{year:04d}{month:02d}".format(year=yr, month=mn)
     # input and output filename
@@ -41,13 +40,16 @@ def check ( tel, yr, mn, dy, run=None ) :
     flst = open(filelist, "r").readlines()
     clst = []
     fcnt, i = len(flst), 0
+    pb = common.progress_bar(0, value_from=0, value_to=fcnt)
     for f in flst :
-        i += 1
-        util.progress_bar(i, fcnt)
+        #i += 1
+        #util.progress_bar(i, fcnt)
+        pb.step()
         info = headerinfo.headerinfo(f.strip())
         if info is not None :
             clst.append(info)
-    print ("\n")
+    #print ("\n")
+    pb.end()
 
     # output check list
     with open(chklist, "w") as f :
@@ -59,8 +61,11 @@ def check ( tel, yr, mn, dy, run=None ) :
 
 
 if __name__ =="__main__" :
-    argv = sys.argv
-    if len(sys.argv) < 5 :
+    import args
+    a = {"arg_01":None, "arg_02":None, "arg_03":None, "arg_04":None, "arg_05":None}
+    a = args.arg_trans(sys.argv, a, silent=True)
+
+    if a["arg_04"] is None :
         print ("""Syntax:
     python check.py tel run year month day
         tel: 3 letter code of telescope, we now have bok and xao
@@ -70,7 +75,4 @@ if __name__ =="__main__" :
         run: code of run, usually as yyyymm format
     """)
     else :
-        run = None
-        if len(sys.argv) > 5:
-            run = sys.argv[5]
-        check ( sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), run)
+        check(a["arg_01"], int(a["arg_02"]), int(a["arg_03"]), int(a["arg_04"]), a["arg_05"])

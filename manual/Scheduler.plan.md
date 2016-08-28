@@ -118,42 +118,42 @@ Make schedule.
 Utilities for common usage.
 
 ##### function
-+ dms2dec
-+ hmd2dec
-+ dec2hms
-+ dec2dms
-+ hour2str
-+ sxpar
-+ progress_bar
-+ read_conf
-+ msgbox
++ `dms2dec`
++ `hmd2dec`
++ `dec2hms`
++ `dec2dms`
++ `hour2str`
++ `sxpar`
++ `progress_bar`
++ `read_conf`
++ `msgbox`
 
 ### schdutil
 
 Utilities for scheduler.
 
 ##### class
-+ base_info base class for xxx_info classes
-+ plan_info
-+ mode_info
-+ check_info
-+ field_info
-+ block_info
-+ exposure_info
++ `base_info base class for xxx_info classes`
++ `plan_info`
++ `mode_info`
++ `check_info`
++ `field_info`
++ `block_info`
++ `exposure_info`
 
 ##### function
-+ load_basic
-+ load_expplan
-+ load_expmode
-+ load_field
-+ load_obsed
-+ ls_files
-+ day_of_year
-+ fmst
-+ mjd
-+ night_len
-+ night_time
-+ airmass
++ `load_basic`
++ `load_expplan`
++ `load_expmode`
++ `load_field`
++ `load_obsed`
++ `ls_files`
++ `day_of_year`
++ `fmst`
++ `mjd`
++ `night_len`
++ `night_time`
++ `airmass`
 
 ## Data Structures
 

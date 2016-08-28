@@ -7,13 +7,11 @@
 """
 
 import os
-import sys
 import numpy as np
-import util
-import sky
+import common
 
 
-class base_info :
+class base_info (object) :
     """ Base for structure like class, holding fields
     """
     def __init__ (self, **kwargs) :
@@ -29,7 +27,7 @@ class plan_info (base_info) :
             active=active, dither1=dither1, dither2=dither2)
 
     @staticmethod
-    def parse ( line ) :
+    def parse (line) :
         """ Parse a new instance from line, columns seperated by space
         Col: code, name, filter, expt, repeat, factor, active, dither1, dither2
         dither1/2 are optional, default 0.0 0.0
@@ -40,7 +38,7 @@ class plan_info (base_info) :
                       int(pp[4]), float(pp[5]), (int(pp[6]) != 0), float(pp[7]), float(pp[8]))
         return x
 
-    def __repr__ ( self ) :
+    def __repr__ (self) :
         return ("{s.code:<2d} {s.name:>10s} {s.filter:>8s} {s.expt:>5.1f} {s.repeat:>2d} {s.factor:>3.1f} "
                 "{s.active:1d} {s.dither1:>5.1f} {s.dither2:>5.1f}").format(s=self)
 
@@ -48,12 +46,12 @@ class plan_info (base_info) :
 class mode_info (base_info) :
     """ A structure like class, holding info of mode
     """
-    def __init__ ( self, filter, expt, code, factor ) :
+    def __init__ (self, filter, expt, code, factor) :
         base_info.__init__(self,
             filter=filter, expt=expt, code=code, factor=factor)
 
     @staticmethod
-    def parse ( line ) :
+    def parse (line) :
         """ Parse a new instance from line, columns seperated by space
         Col: filter, expt, code, factor
         """
@@ -61,26 +59,26 @@ class mode_info (base_info) :
         x = mode_info(pp[0], float(pp[1]), int(pp[2]), float(pp[3]))
         return x
 
-    def mode ( self ) :
+    def mode (self) :
         """ Return the mode id string, consists of filter and expt
         """
         return "{m.filter}_{m.expt:05.1f}".format(m=self)
 
-    def __repr__ ( self ) :
+    def __repr__ (self) :
         return "{s.filter:<8s} {s.expt:>5.1f} {s.code:>2d} {s.factor:>3.1f}".format(s=self)
 
 
 class check_info (base_info) :
     """ A structure like class, holding info of check
     """
-    def __init__ ( self, fitsfile, filesn, imgtyp, object, filter, expt, ra, de ) :
+    def __init__ (self, fitsfile, filesn, imgtyp, object, filter, expt, ra, de) :
         base_info.__init__(self,
             fitsfile=fitsfile, filesn=filesn,
             imgtyp=imgtyp, object=object, filter=filter, expt=expt,
             ra=ra, de=de)
 
     @staticmethod
-    def parse ( line ) :
+    def parse (line) :
         """ Parse a new instance from line, columns seperated by space
         Col: filesn, imgtyp, object, filter, expt, ra, de, fitsfile
         NOTE: different to init, fitefilename is the last in text
@@ -95,15 +93,15 @@ class check_info (base_info) :
         """ Simulate a exposure check info from expplan and field
         """
         x = check_info("SIMULATED.fits", 0, "OBJECT",
-                        str(field.id), plan.filter, plan.expt, field.ra, field.de)
+                       str(field.id), plan.filter, plan.expt, field.ra, field.de)
         return x
 
-    def mode ( self ) :
+    def mode (self) :
         """ Return the mode id string, consists of filter and expt
         """
         return "{m.filter}_{m.expt:05.1f}".format(m=self)
 
-    def __repr__ ( self ) :
+    def __repr__ (self) :
         return ("{s.filesn:04d} {s.imgtyp:>8s} {s.object:>10s} {s.filter:>8s} {s.expt:>5.1f} "
                 "{s.ra:>9.5f} {s.de:>+9.5f} {s.fitsfile}").format(s=self)
 
@@ -111,12 +109,12 @@ class check_info (base_info) :
 class field_info (base_info) :
     """ A structure like class, holding info of field
     """
-    def __init__ ( self, id, ra, de, gl, gb, bk ) :
+    def __init__ (self, id, ra, de, gl, gb, bk) :
         base_info.__init__(self,
-            id = id, gl = gl, gb = gb, ra = ra, de = de, bk = bk)
+            id=id, gl=gl, gb=gb, ra=ra, de=de, bk=bk)
 
     @staticmethod
-    def parse ( line ) :
+    def parse (line) :
         """ Parse a new instance from line, columns seperated by space
         Col: id, ra, dec, gl, gb, block name
         """
@@ -124,16 +122,18 @@ class field_info (base_info) :
         x = field_info(int(pp[0]), float(pp[1]), float(pp[2]), float(pp[3]), float(pp[4]), pp[5])
         return x
 
-    def __repr__ ( self ) :
+    def __repr__ (self) :
         fmt = "{s.id:<5d}  {s.ra:>9.5f} {s.de:>+9.5f}  {s.gl:>9.5f} {s.gb:>+9.5f}  {s.bk:s}"
-        if self.__dict__.has_key("tag") : fmt += "  {s.tag:1d}"
+        #if self.__dict__.has_key("tag") :
+        if "tag" in self.__dict__ :
+            fmt += "  {s.tag:1d}"
         return fmt.format(s=self)
 
     def airmass (self, lat, lst) :
-        return sky.airmass(lat, lst, self.ra, self.de)
+        return common.sky.airmass(lat, lst, self.ra, self.de)
 
     def azalt (self, lat, lst) :
-        return sky.azalt(lat, lst, self.ra, self.de)
+        return common.sky.azalt(lat, lst, self.ra, self.de)
 
 
 class block_info (base_info) :
@@ -147,8 +147,8 @@ class block_info (base_info) :
 
     def __repr__ (self) :
         return "{bn}: {ra:11} {de:11} {fn:>2}# [{f}]".format(
-            bn=self.bname, ra=util.dec2hms(self.ra), de=util.dec2dms(self.dec), fn=len(fields),
-            f=",".join(["{:>5d}".format(f.id) for f in fields]) )
+            bn=self.bname, ra=common.angle.dec2hms(self.ra), de=common.angle.dec2dms(self.dec), fn=len(self.fields),
+            f=",".join(["{:>5d}".format(f.id) for f in self.fields]) )
 
 
 class exposure_info (base_info) :
@@ -166,29 +166,29 @@ class exposure_info (base_info) :
 
     # some propperties, providing more formats for output
     @property
-    def objs (self)  : return str(obj)
+    def objs (self)  : return str(self.obj)
     @property
     def expti (self) : return int(self.expt)
     @property
     def exptf (self) : return self.expt
     @property
-    def rad (self) :   return ra
+    def rad (self) :   return self.ra
     @property
-    def ded (self) :   return de
+    def ded (self) :   return self.de
     @property
-    def ras (self) :   return util.dec2hms(self.ra)
+    def ras (self) :   return common.angle.dec2hms(self.ra)
     @property
-    def des (self) :   return util.dec2dms(self.de)
+    def des (self) :   return common.angle.dec2dms(self.de)
     @property
-    def rap (self) :   return util.dec2hms(self.ra, len=9, delimiter="")
+    def rap (self) :   return common.angle.dec2hms(self.ra, len=9, delimiter="")
     @property
-    def dep (self) :   return util.dec2dms(self.de, len=9, delimiter="")
+    def dep (self) :   return common.angle.dec2dms(self.de, len=9, delimiter="")
 
 
 ####################################################################################################
 
 
-def load_basic ( tel ) :
+def load_basic (tel) :
     """ Load basic info of site and telescope
     args:
         tel: telescope brief code
@@ -197,25 +197,25 @@ def load_basic ( tel ) :
         keys: lon, lat, alt, tz, interval, fov, lons, lats, bmove, fmt
     """
     basicfile = "{tel}/conf/basic.txt".format(tel=tel)
-    basiclines = util.read_conf(basicfile, default=[])
+    basiclines = common.util.read_conf(basicfile, default=[])
     nb = len(basiclines)
 
     basic = base_info(lon=-111.6, lat=+31.96, alt=2096.0, tz=-7, lons="-111:35:48", lats="31:57:30",
                       inter=50.0, fov=0.9, bmove = 90.0,
                       fmt="obs   {e.expt:5.1f}  object     {e.obj:>8}  1  {e.filter:>8}  {e.rap:9}  {e.dep:9}  2000.0")
-    if nb >= 1 : basic.lon   = util.dms2dec(basiclines[0]) ; basic.lons = basiclines[0]
-    if nb >= 2 : basic.lat   = util.dms2dec(basiclines[1]) ; basic.lats = basiclines[1]
-    if nb >= 3 : basic.alt   =        float(basiclines[2])
-    if nb >= 4 : basic.tz    =        float(basiclines[3])
-    if nb >= 5 : basic.inter =        float(basiclines[4])
-    if nb >= 6 : basic.fov   =        float(basiclines[5])
-    if nb >= 7 : basic.bmove =        float(basiclines[6])
-    if nb >= 8 : basic.fmt   =              basiclines[7]
+    if nb >= 1 : basic.lon   = common.angle.dms2dec(basiclines[0]) ; basic.lons = basiclines[0]
+    if nb >= 2 : basic.lat   = common.angle.dms2dec(basiclines[1]) ; basic.lats = basiclines[1]
+    if nb >= 3 : basic.alt   = float(basiclines[2])
+    if nb >= 4 : basic.tz    = float(basiclines[3])
+    if nb >= 5 : basic.inter = float(basiclines[4])
+    if nb >= 6 : basic.fov   = float(basiclines[5])
+    if nb >= 7 : basic.bmove = float(basiclines[6])
+    if nb >= 8 : basic.fmt   = basiclines[7]
 
     return basic
 
 
-def load_expplan ( tel ) :
+def load_expplan (tel) :
     """ Load exposure plan from conf file
     args:
         tel: telescope brief code
@@ -225,7 +225,7 @@ def load_expplan ( tel ) :
         plan is configure for future observation, may be difference with old obs
     """
     expplanfile = "{tel}/conf/expplan.txt".format(tel=tel)
-    planlines = util.read_conf(expplanfile, default=["0 u60 u 60 1 1 0 0"])
+    planlines = common.util.read_conf(expplanfile, default=["0 u60 u 60 1 1 0 0"])
 
     plans = {}
     for line in planlines :
@@ -235,7 +235,7 @@ def load_expplan ( tel ) :
     return plans
 
 
-def load_expmode ( tel ) :
+def load_expmode (tel) :
     """ Load exposure mode from conf file
     args:
         tel: telescope brief code
@@ -246,7 +246,7 @@ def load_expmode ( tel ) :
         mode is a connection between real exposure mode and plan
     """
     expmodefile = "{tel}/conf/expmode.txt".format(tel=tel)
-    modelines = util.read_conf(expmodefile, default=["u 60 0 1"])
+    modelines = common.util.read_conf(expmodefile, default=["u 60 0 1"])
 
     modes = {}
     for line in modelines :
@@ -256,7 +256,7 @@ def load_expmode ( tel ) :
     return modes
 
 
-def load_field ( tel ) :
+def load_field (tel) :
     """ Load field definition from conf file
     args:
         tel: telescope brief code
@@ -265,7 +265,7 @@ def load_field ( tel ) :
         a field is a instance of class field_info
     """
     fieldfile = "{tel}/conf/field.txt".format(tel=tel)
-    fieldlines = util.read_conf(fieldfile, default=None)
+    fieldlines = common.util.read_conf(fieldfile, default=None)
 
     fields = {}
     for line in fieldlines :
@@ -275,7 +275,7 @@ def load_field ( tel ) :
     return fields
 
 
-def load_obsed ( fields, obsedlist, plans, marklist=[] ) :
+def load_obsed (fields, obsedlist, plans, marklist=None) :
     """ load obsed list, and sum obsed factor to fields.
     args:
         fields: input and output, field dict, each object will add factor, mark, and tag
@@ -290,6 +290,7 @@ def load_obsed ( fields, obsedlist, plans, marklist=[] ) :
     plancode = plans.keys()
     plancode.sort()
     nplan = len(plans)
+    if marklist is None : marklist = []
     # add empty factor for all field
     emptyfactor = {} # make an empty factor
     for p in plancode :
@@ -342,12 +343,13 @@ def load_obsed ( fields, obsedlist, plans, marklist=[] ) :
         fmax = max(activefactor)
         fmin = min(activefactor)
         mark = max(activemark)
-        f.tag = 0 if fmax == 0.0 else \
-                        3 if mark >  0.0 else \
-                        1 if fmin <  1.0 else 2
+        f.tag = (0 if fmax == 0.0 else
+                 3 if mark > 0.0 else
+                 1 if fmin < 1.0 else
+                 2)
 
 
-def ls_files ( wildcard ) :
+def ls_files (wildcard) :
     """ Execute a ls command with wildcard, and return file list
     args:
         wildcard: target of ls command
@@ -355,4 +357,3 @@ def ls_files ( wildcard ) :
         list of found files
     """
     return [f.strip() for f in os.popen("ls " + wildcard).readlines()]
-

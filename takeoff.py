@@ -15,9 +15,10 @@ from astropy.time import Time
 import astropy.coordinates
 #from myPyLib.Mollweide import moll
 #from matplotlib import pyplot as plt
-import util
+#import util
+from common import *
 import schdutil
-import sky
+#import sky
 import plotmap
 import collect
 
@@ -59,12 +60,14 @@ def takeoff ( tel, yr, mn, dy, run=None,
         check: bool, if check is true, will report for each block's selection
     """
 
-	# all var starts with `rep_` contains report info
+    # all var starts with `rep_` contains report info
     rep_start_time = Time.now()
 
     if not os.path.isdir(tel) or not os.path.isfile(tel+"/conf/basic.txt") :
-        print (util.msgbox(["Telescope `{tel}` does NOT EXIST!!".format(tel=tel)],
-                            title="ERROR", border="*"))
+        print(msg_box().box(["Telescope `{tel}` does NOT EXIST!!".format(tel=tel)],
+                     title="ERROR", border="*"))
+        #print (util.msgbox(["Telescope `{tel}` does NOT EXIST!!".format(tel=tel)],
+        #                    title="ERROR", border="*"))
         return
 
     # load site and telescope basic data
@@ -115,13 +118,13 @@ def takeoff ( tel, yr, mn, dy, run=None,
     daypath = "{tel}/schedule/{run}/J{mjd:0>4d}/".format(tel=tel, run=run, mjd=mjd18)
     if os.path.isdir(daypath) :
         if not overwrite :
-            print (util.msgbox(["Schedule dir already exists.",
+            print (msg_box().box(["Schedule dir already exists.",
                                 "If you want to overwrite, please set `overwrite=True`"],
                                 title="ERROR", border="*"))
             return
     os.system("mkdir -p " + daypath)
     if not os.path.isdir(daypath) :
-        print (util.msgbox("Can NOT make schedule dir `{}`".format(daypath),
+        print (msg_box().box("Can NOT make schedule dir `{}`".format(daypath),
                            title="ERROR", border="*"))
 
     ######################################################################################
@@ -182,19 +185,19 @@ def takeoff ( tel, yr, mn, dy, run=None,
         newblock[b] = schdutil.block_info(b, f_in_b)
 
     # show prepare message
-    tea(rep_f, util.msgbox([
+    tea(rep_f, msg_box().box([
         "## {tel}, on {days} (J{mjd:04}) of run `{run}`".
             format(tel=tel,days=daystr,mjd=mjd18, run=run),
         "Sun set at {s:5}, rise at {r:5}, obs time is {os:5} ==> {oe:5}".
-            format( s=util.hour2str(sunset_hour),  r=util.hour2str(sunrise_hour-24.0),
-                   os=util.hour2str(obs_begin), oe=util.hour2str(obs_end-24.0)),
+            format( s=angle.hour2str(sunset_hour),  r=angle.hour2str(sunrise_hour-24.0),
+                   os=angle.hour2str(obs_begin), oe=angle.hour2str(obs_end-24.0)),
         "Obs hours is {ol:5}, LST of midnight is {mst:5}".
-            format(ol=util.hour2str(obs_end-obs_begin), mst=util.hour2str(lst24)),
+            format(ol=angle.hour2str(obs_end-obs_begin), mst=angle.hour2str(lst24)),
         "Moon mean position is {ra:11} {de:11}, phase is {ph:4.1%}".
-            format(ra=util.dec2hms(mpos.ra), de=util.dec2dms(mpos.dec), ph=mphase),
+            format(ra=angle.dec2hms(mpos.ra), de=angle.dec2dms(mpos.dec), ph=mphase),
         ("Simulation included" if simulate else "No simulation"),],
         title="Night General Info", align="^<<<>"))
-    tea(rep_f, util.msgbox([
+    tea(rep_f, msg_box().box([
         "{:<20} {:>5}       {:26}".       format("All Fields",        n_tag,""),
         "{:<20} {:>5}   |   {:<20} {:>5}".format("x: Finished",       n_tag_2,
                                                  "x: Near Moon/Sun",  n_tag_10),
@@ -209,7 +212,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
     lst_clock = lambda c : (lst24 + c) % 24.0  # lst of start, use lst_clock(clock_now) to call this
 
     tea(rep_f, "Begin to schedule from {clock}, LST {lst}\n".format(
-        clock=util.hour2str(clock_now), lst=util.hour2str(lst_clock(clock_now))))
+        clock=angle.hour2str(clock_now), lst=angle.hour2str(lst_clock(clock_now))))
 
     # define a lambda rank function
     rank = lambda aa : aa.argsort().argsort()
@@ -221,6 +224,8 @@ def takeoff ( tel, yr, mn, dy, run=None,
         simu_check_fn = simu_path + "check.J{mjd:04d}.lst".format(mjd=mjd18)
         sim_f = open(simu_check_fn, "w")
         tea(rep_f, "Simulation file: " + simu_check_fn)
+    else :
+        sim_f = None
 
     # format of output
     rep_tit = "{clock:5} [{lst:^5}]  {sn:2} | {bn:^7} ({ra:^9} {de:^9}) | {airm:4} {az:>5} {alt:>5} | {btime:>5}".format(
@@ -275,7 +280,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
         # assume all fields need a full round, this is estimated center lst
         blst = lst_now + plan_time * bsize / 2.0
         # calculate airmass for all available block
-        ha = util.angle_dis(blst * 15.0, bra) / 15.0
+        ha = angle.angle_dis(blst * 15.0, bra) / 15.0
         airm = sky.airmass(site.lat, blst, bra, bde)
         baz, balt = sky.azalt(site.lat, blst, bra, bde)
 
@@ -292,11 +297,11 @@ def takeoff ( tel, yr, mn, dy, run=None,
         elif skip_begin is not None :
             # found good block, but before this, some time skipped, print a warning
             tea(rep_f, rep_war( skip=int((clock_now - skip_begin) * 60),
-                skipbegin=util.hour2str(skip_begin),
-                clock=util.hour2str(clock_now), lst=util.hour2str(lst_now) ))
-            sum_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(skip_begin), sn=0,
+                skipbegin=angle.hour2str(skip_begin),
+                clock=angle.hour2str(clock_now), lst=angle.hour2str(lst_now) ))
+            sumf_f.write(sum_fmt(mjd=mjd18, clock=angle.hour2str(skip_begin), sn=0,
                 bn="SKIP!!!", ra=0.0, de=0.0, airm=0.0, az=0.0, alt=0.0,
-                lst=util.hour2str(lst_now), btime=int(int((clock_now - skip_begin) * 3600)) ))
+                lst=angle.hour2str(lst_now), btime=int(int((clock_now - skip_begin) * 3600)) ))
             skip_count += 1
             skip_total += clock_now - skip_begin
             skip_begin = None
@@ -346,7 +351,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
 
             # plot a check map
             plotmap.plotmap(ara, ade, np.array([f.tag for f in afields]),
-                title=tel+" "+daystr+" "+util.hour2str(clock_now),
+                title=tel+" "+daystr+" "+angle.hour2str(clock_now),
                 pngfile=see_fn_fmt(path=daypath, mjd=mjd18, sn=block_sn, bname=bname_best),
                 mpos=(mpos.ra, mpos.dec),
                 spos=(spos.ra, spos.dec),
@@ -368,7 +373,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
                     nrepeat = int(np.ceil(factor_work / plans[p].factor))
                     for i in range(nrepeat) :
                         # output to script and simulate file
-                        if max(abs(util.angle_dis(lra, f.ra, 1.0/np.cos(np.deg2rad(lde)))), abs(lde - f.de)) > site.bmove :
+                        if max(abs(angle.angle_dis(lra, f.ra, 1.0/np.cos(np.deg2rad(lde)))), abs(lde - f.de)) > site.bmove :
                             plan_f.write("\n") # a mark about big move, for bok not for xao
                             jump += 1
                         scr = scr_fmt(e=schdutil.exposure_info.make(plans[p], f))
@@ -393,7 +398,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
         tea(rep_f, rep_fmt( sn=block_sn,
             bn=bname_best, ra=block_best.ra, de=block_best.de, airm=airm_2[ix_best],
             az=baz_2[ix_best], alt=balt_2[ix_best],
-            clock=util.hour2str(clock_now), lst=util.hour2str(lst_now), btime=int(block_time) ))
+            clock=angle.hour2str(clock_now), lst=angle.hour2str(lst_now), btime=int(block_time) ))
         sumb_f.write(sum_fmt(mjd=mjd18, clock=clock_now, sn=block_sn,
             bn=bname_best, ra=block_best.ra, de=block_best.de, airm=airm_2[ix_best],
             az=baz_2[ix_best], alt=balt_2[ix_best],
@@ -408,11 +413,11 @@ def takeoff ( tel, yr, mn, dy, run=None,
     if skip_begin is not None :
         # found good block, but before this, some time skipped, print a warning
         tea(rep_f, rep_war( skip=int((clock_now - skip_begin) * 60),
-            skipbegin=util.hour2str(skip_begin),
-            clock=util.hour2str(clock_now), lst=util.hour2str(lst_clock(clock_now)) ))
-        sum_f.write(sum_fmt(mjd=mjd18, clock=util.hour2str(skip_begin), sn=0,
+            skipbegin=angle.hour2str(skip_begin),
+            clock=angle.hour2str(clock_now), lst=angle.hour2str(lst_clock(clock_now)) ))
+        sumf_f.write(sum_fmt(mjd=mjd18, clock=angle.hour2str(skip_begin), sn=0,
             bn="SKIP!!!", ra=0.0, de=0.0, airm=0.0, az=0.0, alt=0.0,
-            lst=util.hour2str(lst_clock(clock_now)), btime=int(int((clock_now - skip_begin) * 3600)) ))
+            lst=angle.hour2str(lst_clock(clock_now)), btime=int(int((clock_now - skip_begin) * 3600)) ))
         skip_count += 1
         skip_total += clock_now - skip_begin
         skip_begin = None
@@ -427,16 +432,16 @@ def takeoff ( tel, yr, mn, dy, run=None,
     os.system("unix2dos {}".format(plan_fn))
     tea(rep_f, "")
     # total of schedule
-    tea(rep_f, util.msgbox([
+    tea(rep_f, msg_box().box([
         "Total {b} blocks, {e} exposures, {t} costed. From {s} to {f}".format(
-            b=block_sn, e=len(exp_airmass), t=util.hour2str(clock_now-obs_begin),
-            s=util.hour2str(obs_begin), f=util.hour2str(clock_now)),
+            b=block_sn, e=len(exp_airmass), t=angle.hour2str(clock_now-obs_begin),
+            s=angle.hour2str(obs_begin), f=angle.hour2str(clock_now)),
         "Estimate airmass: {me:5.3f}+-{st:5.3f}, range: {mi:4.2f} -> {ma:4.2f}".format(
             me=np.mean(exp_airmass), st=np.std(exp_airmass),
             mi=np.min(exp_airmass), ma=np.max(exp_airmass)),
         "Big move over {bmove} deg: {jump} jump(s),".format(jump=jump, bmove=site.bmove),
         "SKIP: {sc} session(s) encounted, {st} wasted.".format(
-            sc=skip_count, st=util.hour2str(skip_total))],
+            sc=skip_count, st=angle.hour2str(skip_total))],
         title="Summary") )
 
     # plot task map of this night

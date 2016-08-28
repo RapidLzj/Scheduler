@@ -10,10 +10,8 @@
 
 import os
 import sys
-import time
-import util
+import common
 import schdutil
-import sky
 
 
 def collect ( tel, yr, mn, dy, run=None ) :
@@ -26,12 +24,12 @@ def collect ( tel, yr, mn, dy, run=None ) :
         run: run code, default is `yyyymm`
     """
     site = schdutil.load_basic(tel)
-    mjd18 = sky.mjd_of_night(yr, mn, dy, site)
+    mjd18 = common.sky.mjd_of_night(yr, mn, dy, site)
     if run is None :
         run = "{year:04d}{month:02d}".format(year=yr, month=mn)
     # search check filenames
-    checklist  = "{tel}/obsed/{run}/check.J{day:04d}.lst".format(tel=tel, run=run, day=mjd18)
-    obsedlist  = "{tel}/obsed/{run}/obsed.J{day:04d}.lst".format(tel=tel, run=run, day=mjd18)
+    checklist = "{tel}/obsed/{run}/check.J{day:04d}.lst".format(tel=tel, run=run, day=mjd18)
+    obsedlist = "{tel}/obsed/{run}/obsed.J{day:04d}.lst".format(tel=tel, run=run, day=mjd18)
 
     if not os.path.isfile(checklist) :
         print ("ERROR!! Check list NOT exists: \'{0}\'".format(checklist))
@@ -93,9 +91,14 @@ def collect ( tel, yr, mn, dy, run=None ) :
 
 
 if __name__ == "__main__" :
-    if len(sys.argv) < 5 :
-        print ("""Syntax:
-    python collect.py tel year month day [run]
+    import args
+
+    a = {"arg_01" : None, "arg_02" : None, "arg_03" : None, "arg_04" : None, "arg_05" : None}
+    a = args.arg_trans(sys.argv, a, silent=True)
+
+    if a["arg_04"] is None :
+        print("""Syntax:
+    python collect.py tel run year month day
         tel: 3 letter code of telescope, we now have bok and xao
         year: 4-digit year
         month: month number, 1 to 12
@@ -103,7 +106,4 @@ if __name__ == "__main__" :
         run: code of run, usually as yyyymm format
     """)
     else :
-        run = None
-        if len(sys.argv) > 5:
-            run = sys.argv[5]
-        collect ( sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4]), run)
+        collect(a["arg_01"], int(a["arg_02"]), int(a["arg_03"]), int(a["arg_04"]), a["arg_05"])

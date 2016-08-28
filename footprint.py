@@ -13,7 +13,7 @@ import sys
 import time
 from Mollweide import moll
 from matplotlib import pyplot as plt
-import util
+import common
 import schdutil
 
 
@@ -151,6 +151,6 @@ if __name__ =="__main__" :
                 galfile = a[1:]
             elif a.startswith("B") :
                 before = True
-        print txtfile, equfile, galfile, run, day, before
-        footprint(sys.argv[1], run=run, day=day, plan=plan, before=before,
+        #print txtfile, equfile, galfile, run, day, before
+        footprint(sys.argv[1], run=run, day=day, before=before,
                   reportfile=txtfile, equfile=equfile, galfile=galfile)
