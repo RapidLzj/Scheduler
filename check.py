@@ -44,10 +44,10 @@ def check (tel, yr, mn, dy, run="") :
     for f in flst :
         #i += 1
         #util.progress_bar(i, fcnt)
-        pb.step()
         info = headerinfo.headerinfo(f.strip())
         if info is not None :
             clst.append(info)
+        pb.step()
     #print ("\n")
     pb.end()
 
@@ -57,7 +57,7 @@ def check (tel, yr, mn, dy, run="") :
             f.write("{}\n".format(c))
     #f.close()
 
-    print ("Check OK! {0} files from `{1}`.".format(len(clst), filelist))
+    print ("Check OK! {0} files from `{1}`.\n".format(len(clst), filelist))
 
 
 if __name__ == "__main__" :

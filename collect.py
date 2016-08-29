@@ -42,6 +42,7 @@ def collect ( tel, yr, mn, dy, run="" ) :
     # load check files
     chk = []
     lines = open(checklist, "r").readlines()
+    pb = common.progress_bar(0, value_from=0, value_to=len(lines), value_step=0.5)
     for line in lines :
         c = schdutil.check_info.parse(line)
         mode = c.mode()
@@ -56,6 +57,7 @@ def collect ( tel, yr, mn, dy, run="" ) :
         if c.object.endswith("x") :
             c.object = c.object[0:-1]
         chk.append(c)
+        pb.step()
 
     # init a empty 2-d dict `objs`, keys: obj name, plan code
     # use dict to provide an array with easy index
@@ -70,6 +72,8 @@ def collect ( tel, yr, mn, dy, run="" ) :
     # fill check info into objs
     for c in chk :
         objmap[c.object][c.code] += c.factor
+        pb.step()
+    pb.end()
 
     # output obsed file
     # get an fixed order, so no random between different system
@@ -87,7 +91,8 @@ def collect ( tel, yr, mn, dy, run="" ) :
             f.write(tt)
     #f.close()
 
-    print ("Collect OK! {0} objects from `{1}`.".format(len(objmap), checklist))
+    print ("Collect OK! {0} objects from {1} files of `{2}`.\n".format(
+        len(objmap), len(lines), checklist))
 
 
 if __name__ == "__main__" :
