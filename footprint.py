@@ -17,8 +17,8 @@ import common
 import schdutil
 
 
-def footprint ( tel, reportfile=None, equfile=None, galfile=None,
-                run=None, day=None, before=False ) :
+def footprint (tel, reportfile=None, equfile=None, galfile=None,
+               run=None, day=None, before=False) :
     """ Draw footprint of survey
     args:
         tel: telescope brief code
@@ -122,35 +122,23 @@ def footprint ( tel, reportfile=None, equfile=None, galfile=None,
 
 
 if __name__ =="__main__" :
-    if len(sys.argv) < 2 :
+    import args
+
+    ar = {"tel":None, "text":None, "equ":None, "gal":None, "run":None, "day":None, "before":False}
+    al = {"arg_01" : "tel"}
+    ar = args.arg_trans(sys.argv, ar, silent=True, alias=al)
+
+    if ar["tel"] is None :
         print ("""Syntax:
-    python footprint.py tel [Ttextfile] [Eequfile] [Ggalfile] [Rrun] [Dday] [B]
+    python footprint.py tel [text=textfile] [equ=equfile] [gal=galfile] [run=run] [day=day] [before=]
         tel: 3 letter code of telescope, we now have bok and xao
-        T+textfile: output text report file
-        E+equfile: output file name for Equatorial System
-        G+galfile: output file name for Galactic System
-        R+run: code of run, usually as yyyymm format
-        D+day: modified Julian day of the date, 4 digit, JD-2450000.5
-        B before: draw covered bofore specified run or day
-        for optional argument, need a leading capital E, G, R, D or P, B
+        textfile: output text report file
+        equfile: output file name for Equatorial System
+        galfile: output file name for Galactic System
+        run: code of run, usually as yyyymm format
+        day: modified Julian day of the date, 4 digit, JD-2450000.5
+        before: draw covered before specified run or day, nothing after "="
     """)
     else :
-        txtfile, equfile, galfile = None, None, None
-        run, day, plan = None, None, None
-        before = False
-        for a in sys.argv[2:] :
-            if a.startswith("R") :
-                run = a[1:]
-            elif a.startswith("D") :
-                day = int(a[1:])
-            elif a.startswith("E") :
-                equfile = a[1:]
-            elif a.startswith("T") :
-                txtfile = a[1:]
-            elif a.startswith("G") :
-                galfile = a[1:]
-            elif a.startswith("B") :
-                before = True
-        #print txtfile, equfile, galfile, run, day, before
-        footprint(sys.argv[1], run=run, day=day, before=before,
-                  reportfile=txtfile, equfile=equfile, galfile=galfile)
+        footprint(ar["tel"], run=ar["run"], day=ar["day"], before=ar["before"],
+                  reportfile=ar["text"], equfile=ar["equ"], galfile=ar["gal"])

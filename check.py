@@ -60,14 +60,15 @@ def check (tel, yr, mn, dy, run=None) :
     print ("Check OK! {0} files from `{1}`.".format(len(clst), filelist))
 
 
-if __name__ =="__main__" :
+if __name__ == "__main__" :
     import args
-    a = {"arg_01":None, "arg_02":None, "arg_03":None, "arg_04":None, "arg_05":None}
-    a = args.arg_trans(sys.argv, a, silent=True)
+    ar = {"tel":"", "year":sys.maxsize, "month":sys.maxsize, "day":sys.maxsize, "run":""}
+    al = {"arg_01":"tel", "arg_02":"year", "arg_03":"month", "arg_04":"day", "arg_05":"run"}
+    ar = args.arg_trans(sys.argv, ar, silent=True, alias=al)
 
-    if a["arg_04"] is None :
+    if ar["day"] == sys.maxsize :
         print ("""Syntax:
-    python check.py tel run year month day
+    python check.py tel year month day run
         tel: 3 letter code of telescope, we now have bok and xao
         year: 4-digit year
         month: month number, 1 to 12
@@ -75,4 +76,4 @@ if __name__ =="__main__" :
         run: code of run, usually as yyyymm format
     """)
     else :
-        check(a["arg_01"], int(a["arg_02"]), int(a["arg_03"]), int(a["arg_04"]), a["arg_05"])
+        check(ar["tel"], ar["year"], ar["month"], ar["day"], ar["run"])
