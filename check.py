@@ -15,7 +15,7 @@ import schdutil
 import headerinfo
 
 
-def check (tel, yr, mn, dy, run=None) :
+def check (tel, yr, mn, dy, run="") :
     """ check fits header, and generate a check list
     args:
         tel: telescope brief code
@@ -26,7 +26,7 @@ def check (tel, yr, mn, dy, run=None) :
     """
     site = schdutil.load_basic(tel)
     mjd18 = common.sky.mjd_of_night(yr, mn, dy, site)
-    if run is None :
+    if run is None or run == "" :
         run = "{year:04d}{month:02d}".format(year=yr, month=mn)
     # input and output filename
     filelist = "{tel}/obsed/{run}/files.J{day:04d}.lst".format(tel=tel, run=run, day=mjd18)

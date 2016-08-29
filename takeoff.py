@@ -109,7 +109,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
     ######################################################################################
 
     # default run name rule
-    if run is None :
+    if run is None or run == "" :
         run = "{year:04d}{month:02d}".format(year=yr, month=mn)
     daystr = "{year:04d}.{month:02d}.{day:02d}".format(year=yr, month=mn, day=dy)
     # schedule dir
