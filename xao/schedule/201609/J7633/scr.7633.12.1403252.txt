@@ -1,0 +1,4 @@
+SAGE  sage_survey      4952  OBJECT  21:36:43.08  +14:00:00.0  J2000   40  0  1         r 2 1 Medium
+SAGE  sage_survey      4953  OBJECT  21:40:50.42  +14:00:00.0  J2000   40  0  1         r 2 1 Medium
+SAGE  sage_survey      4954  OBJECT  21:44:57.79  +14:00:00.0  J2000   40  0  1         r 2 1 Medium
+SAGE  sage_survey      4955  OBJECT  21:49:05.13  +14:00:00.0  J2000   40  0  1         r 2 1 Medium

@@ -1,0 +1,1 @@
+SAGE  sage_survey      5246  OBJECT  20:57:01.94  +15:00:00.0  J2000   40  0  1         r 2 1 Medium

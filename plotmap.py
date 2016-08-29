@@ -10,7 +10,7 @@
 import numpy as np
 from Mollweide import moll
 from matplotlib import pyplot as plt
-import util
+import common
 import schdutil
 
 
@@ -45,19 +45,21 @@ def plotmap (ra, de, tag, title="", epsfile=None, pngfile=None,
             0x10:"y,",  # Sun or Moon neighbourhood
             0x11:"y+",  #
             0x12:"yo",  #
+            0x1F:"b,",  # skiped
             }
     if xlabel is None :
         xlabel = {
-            0x00:"Unobserved",
-            0x01:"Partly obsed",
-            0x02:"Finished",
-            0x03:"Tonight",
-            0x04:"Candidate",
-            0x05:None,
-            0x07:"New Selection",
-            0x10:"Near Sun/Moon",
-            0x11:"Near Sun/Moon",
-            0x12:"Near Sun/Moon"
+            0x00:"Unobserved",   # 00000
+            0x01:"Partly obsed", # 00001
+            0x02:"Finished",     # 00010
+            0x03:"Tonight",      # 00011
+            0x04:"Candidate",    # 00100
+            0x05: None,          # 00101
+            0x07:"New Selection",# 00111
+            0x10:"Near Sun/Moon",# 10000
+            0x11:"Near Sun/Moon",# 10001
+            0x12:"Near Sun/Moon",# 10010
+            0x1F:"Skiped",       # 11111
             }
 
     # plot

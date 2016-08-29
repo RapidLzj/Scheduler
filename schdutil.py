@@ -275,7 +275,7 @@ def load_field (tel) :
     return fields
 
 
-def load_obsed (fields, obsedlist, plans, marklist=None) :
+def load_obsed (fields, obsedlist, plans, marklist=None, skipfile=None) :
     """ load obsed list, and sum obsed factor to fields.
     args:
         fields: input and output, field dict, each object will add factor, mark, and tag
@@ -298,6 +298,15 @@ def load_obsed (fields, obsedlist, plans, marklist=None) :
     for f in fields :
         fields[f].factor = emptyfactor.copy()
         fields[f].mark = emptyfactor.copy()
+        fields[f].tag = 0
+
+    if skipfile is not None and os.path.isfile(skipfile) :
+        skiplines = open(skipfile, "r").readlines()
+        for pp in skiplines :
+            if pp.isdigit() :
+                id = int(pp)
+                if id in fields :
+                    fields[id].tag = 0x1F
 
     # load obsed list and mark fields
     for obsed in obsedlist :
@@ -338,15 +347,16 @@ def load_obsed (fields, obsedlist, plans, marklist=None) :
 
     # new version using plans.active
     for f in fields.values() :
-        activefactor = [f.factor[p] for p in plancode if plans[p].active]
-        activemark = [f.mark[p] for p in plancode if plans[p].active]
-        fmax = max(activefactor)
-        fmin = min(activefactor)
-        mark = max(activemark)
-        f.tag = (0 if fmax == 0.0 else
-                 3 if mark > 0.0 else
-                 1 if fmin < 1.0 else
-                 2)
+        if f.tag == 0 :
+            activefactor = [f.factor[p] for p in plancode if plans[p].active]
+            activemark = [f.mark[p] for p in plancode if plans[p].active]
+            fmax = max(activefactor)
+            fmin = min(activefactor)
+            mark = max(activemark)
+            f.tag = (0 if fmax == 0.0 else
+                     3 if mark > 0.0 else
+                     1 if fmin < 1.0 else
+                     2)
 
 
 def ls_files (wildcard) :

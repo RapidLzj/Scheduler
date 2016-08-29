@@ -1,0 +1,10 @@
+SAGE  sage_survey      4425  OBJECT  03:11:05.88  +13:00:00.0  J2000   40  0  1         g 2 1 Medium
+SAGE  sage_survey      4426  OBJECT  03:15:12.19  +13:00:00.0  J2000   40  0  1         g 2 1 Medium
+SAGE  sage_survey      4427  OBJECT  03:19:18.50  +13:00:00.0  J2000   40  0  1         g 2 1 Medium
+SAGE  sage_survey      4428  OBJECT  03:23:24.81  +13:00:00.0  J2000   40  0  1         g 2 1 Medium
+SAGE  sage_survey      4429  OBJECT  03:27:31.12  +13:00:00.0  J2000   40  0  1         g 2 1 Medium
+SAGE  sage_survey      4425  OBJECT  03:11:05.88  +13:00:00.0  J2000   40  0  1         r 2 1 Medium
+SAGE  sage_survey      4426  OBJECT  03:15:12.19  +13:00:00.0  J2000   40  0  1         r 2 1 Medium
+SAGE  sage_survey      4427  OBJECT  03:19:18.50  +13:00:00.0  J2000   40  0  1         r 2 1 Medium
+SAGE  sage_survey      4428  OBJECT  03:23:24.81  +13:00:00.0  J2000   40  0  1         r 2 1 Medium
+SAGE  sage_survey      4429  OBJECT  03:27:31.12  +13:00:00.0  J2000   40  0  1         r 2 1 Medium

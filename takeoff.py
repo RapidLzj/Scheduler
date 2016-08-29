@@ -27,8 +27,15 @@ def tea ( rep_file, rep_info ) :
         rep_file: file handler of report file
         rep_info: text to be write
     """
-    rep_file.write(rep_info + "\n")
-    print (rep_info)
+    if type(rep_info) is str :
+        if rep_file is not None :
+            rep_file.write(rep_info + "\n")
+        print (rep_info)
+    else :
+        for r in rep_info :
+            if rep_file is not None :
+                rep_file.write(r + "\n")
+            print(r)
 
 
 def stdscore (x) :
@@ -62,10 +69,9 @@ def takeoff ( tel, yr, mn, dy, run=None,
     rep_start_time = Time.now()
 
     if not os.path.isdir(tel) or not os.path.isfile(tel+"/conf/basic.txt") :
-        print(common.msg_box().box(["Telescope `{tel}` does NOT EXIST!!".format(tel=tel)],
-                                   title="ERROR", border="*"))
-        #print (util.msgbox(["Telescope `{tel}` does NOT EXIST!!".format(tel=tel)],
-        #                    title="ERROR", border="*"))
+        tea(None, common.msg_box().box(
+            ["Telescope `{tel}` does NOT EXIST!!".format(tel=tel)],
+            title="ERROR", border="*"))
         return
 
     # load site and telescope basic data
@@ -116,14 +122,16 @@ def takeoff ( tel, yr, mn, dy, run=None,
     daypath = "{tel}/schedule/{run}/J{mjd:0>4d}/".format(tel=tel, run=run, mjd=mjd18)
     if os.path.isdir(daypath) :
         if not overwrite :
-            print (common.msg_box().box(["Schedule dir already exists.",
-                                         "If you want to overwrite, please set `overwrite=True`"],
-                                         title="ERROR", border="*"))
+            tea(None, common.msg_box().box(
+                ["Schedule dir already exists.",
+                 "If you want to overwrite, please set `overwrite=True`"],
+                title="ERROR", border="*"))
             return
     os.system("mkdir -p " + daypath)
     if not os.path.isdir(daypath) :
-        print (common.msg_box().box("Can NOT make schedule dir `{}`".format(daypath),
-                                    title="ERROR", border="*"))
+        tea(None, common.msg_box().box(
+            "Can NOT make schedule dir `{}`".format(daypath),
+            title="ERROR", border="*"))
 
     ######################################################################################
 
@@ -147,8 +155,9 @@ def takeoff ( tel, yr, mn, dy, run=None,
     active_plans = {p:plans[p] for p in plans if plans[p].active}
 
     # find all obsed file, and mark them
+    skipfile = "{tel}/obsed/skip.lst".format(tel=tel)
     obsedlist = schdutil.ls_files("{tel}/obsed/*/obsed.J*.lst".format(tel=tel))
-    schdutil.load_obsed(fields, obsedlist, plans)
+    schdutil.load_obsed(fields, obsedlist, plans, skipfile=skipfile)
     afields = np.array(fields.values())
     ara = np.array([f.ra for f in afields])
     ade = np.array([f.de for f in afields])
