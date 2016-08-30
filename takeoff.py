@@ -35,7 +35,7 @@ def tea ( rep_file, rep_info ) :
         for r in rep_info :
             if rep_file is not None :
                 rep_file.write(r + "\n")
-            print(r)
+            print (r)
 
 
 def stdscore (x) :
@@ -264,7 +264,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
     skip_count = 0
     skip_total = 0.0
     exp_airmass = [] # collect airmass
-    lra, lde = 999.99, 99.99 # last field ra, dec
+    lra, lde = float("nan"), float("nan") # last field ra, dec
     jump = 0
     keyweight = [1, 1, 1]
     # time need of a full round for a field
@@ -436,6 +436,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
     plan_f.close()
     if simulate:
         sim_f.close()
+    print ("")
     os.system("unix2dos {}".format(plan_fn))
     tea(rep_f, "")
     # total of schedule
