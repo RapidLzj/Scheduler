@@ -42,7 +42,7 @@ def footprint (tel, reportfile=None, equfile=None, galfile=None,
     # load fields configure file
     plans  = schdutil.load_expplan(tel)
     fields = schdutil.load_field(tel)
-    plancode = plans.keys()
+    plancode = list(plans.keys())
     plancode.sort()
 
     # find all obsed file

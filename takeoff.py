@@ -158,7 +158,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
     skipfile = "{tel}/obsed/skip.lst".format(tel=tel)
     obsedlist = schdutil.ls_files("{tel}/obsed/*/obsed.J*.lst".format(tel=tel))
     schdutil.load_obsed(fields, obsedlist, plans, skipfile=skipfile)
-    afields = np.array(fields.values())
+    afields = np.array(list(fields.values()))
     ara = np.array([f.ra for f in afields])
     ade = np.array([f.de for f in afields])
 
@@ -179,6 +179,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
     n_tag_01 = sum((atag == 0x00) | (atag == 0x01))
     n_tag_2  = sum((atag == 0x02) | (atag == 0x12))
     n_tag_10 = sum((atag == 0x10) | (atag == 0x11))
+    n_tag_1f = sum((atag == 0x1F))
 
     # blocks and unique blocks
     newfieldblock = np.array([f.bk for f in newfield])
@@ -205,9 +206,10 @@ def takeoff ( tel, yr, mn, dy, run=None,
         ("Simulation included" if simulate else "No simulation"),],
         title="Night General Info", align="^<<<>"))
     tea(rep_f, common.msg_box().box([
-        "{:<20} {:>5}       {:26}".       format("All Fields",        n_tag,""),
-        "{:<20} {:>5}   |   {:<20} {:>5}".format("x: Finished",       n_tag_2,
-                                                 "x: Near Moon/Sun",  n_tag_10),
+        "{:<20} {:>5}       {:<20} {:>5}".format("All Fields",        n_tag,
+                                                 "X: Skipped",        n_tag_1f),
+        "{:<20} {:>5}   |   {:<20} {:>5}".format("X: Finished",       n_tag_2,
+                                                 "X: Near Moon/Sun",  n_tag_10),
         "{:<20} {:>5}   |   {:<20} {:>5}".format("Available Fields",  n_tag_01,
                                                  "Available Blocks",  n_block) ],
         title="Fields Count", align="^^"))
@@ -282,7 +284,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
         bra = np.array([b.ra for b in newblock.values()])
         bde = np.array([b.de for b in newblock.values()])
         bsize = np.array([len(b.fields) for b in newblock.values()])
-        bname = np.array(newblock.keys())
+        bname = np.array(list(newblock.keys()))
 
         # assume all fields need a full round, this is estimated center lst
         blst = lst_now + plan_time * bsize / 2.0

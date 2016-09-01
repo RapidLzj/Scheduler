@@ -287,7 +287,7 @@ def load_obsed (fields, obsedlist, plans, marklist=None, skipfile=None) :
     returns:
         Nothing. Obsed factor and tag updated in fields
     """
-    plancode = plans.keys()
+    plancode = list(plans.keys())
     plancode.sort()
     nplan = len(plans)
     if marklist is None : marklist = []
@@ -303,8 +303,9 @@ def load_obsed (fields, obsedlist, plans, marklist=None, skipfile=None) :
     if skipfile is not None and os.path.isfile(skipfile) :
         skiplines = open(skipfile, "r").readlines()
         for pp in skiplines :
-            if pp.isdigit() :
-                id = int(pp)
+            pp0 = pp.strip().split()
+            if len(pp0) > 0 and pp0[0].isdigit() :
+                id = int(pp0[0])
                 if id in fields :
                     fields[id].tag = 0x1F
 

@@ -77,7 +77,7 @@ def collect ( tel, yr, mn, dy, run="" ) :
 
     # output obsed file
     # get an fixed order, so no random between different system
-    plancode = plans.keys()
+    plancode = list(plans.keys())
     plancode.sort()
     with open(obsedlist, "w") as f :
         f.write("#{:<11s}".format("Object"))
