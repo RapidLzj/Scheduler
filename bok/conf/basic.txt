@@ -4,7 +4,7 @@
  -7         # Site Timezone
  50         # Extra time before and after exposure, for ex pointing and readout
  0.9        # Field size of view (degree)
-15.0        # big move limit for telescope, distance between 2 target over this is a big move
+9.0         # big move limit for telescope, distance between 2 target over this is a big move
 obs   {e.exptf:5.1f}  object     {e.obj:>8}  1  {e.filter:>8}  {e.rap:9}  {e.dep:9}  2000.0 # Script format template
 # script template fields available
 #   obj: object name

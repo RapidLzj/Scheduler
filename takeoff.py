@@ -42,7 +42,7 @@ def stdscore (x) :
     return (x - min(x)) / (max(x) - min(x))
 
 
-def takeoff ( tel, yr, mn, dy, run=None,
+def takeoff ( tel, yr, mn, dy, run=None, day=None,
               obs_begin=None, obs_end=None,
               moon_dis_limit=50.0,
               airmass_limit=1.75,
@@ -55,6 +55,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
         mn: year of obs date, 1 to 12
         dy: day of obs date, 0 to 31, or extended
         run: run code, default is `yyyymm`
+        day: day code, default is `Jxxxx`
         obs_begin: obs begin hour, float, default 1.25 hours after sunset
         obs_end, obs end hour, float, default, 1.25 hours before sunrise
         moon_dis_limit: limit of distance of good field to the moon, default 50 deg
@@ -117,9 +118,11 @@ def takeoff ( tel, yr, mn, dy, run=None,
     # default run name rule
     if run is None or run == "" :
         run = "{year:04d}{month:02d}".format(year=yr, month=mn)
+    if day is None or day == "" :
+        day = "J{mjd:0>4d}".format(mjd=mjd18)
     daystr = "{year:04d}.{month:02d}.{day:02d}".format(year=yr, month=mn, day=dy)
     # schedule dir
-    daypath = "{tel}/schedule/{run}/J{mjd:0>4d}/".format(tel=tel, run=run, mjd=mjd18)
+    daypath = "{tel}/schedule/{run}/{day}/".format(tel=tel, run=run, day=day)
     if os.path.isdir(daypath) :
         if not overwrite :
             tea(None, common.msg_box().box(
@@ -206,7 +209,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
         ("Simulation included" if simulate else "No simulation"),],
         title="Night General Info", align="^<<<>"))
     tea(rep_f, common.msg_box().box([
-        "{:<20} {:>5}       {:<20} {:>5}".format("All Fields",        n_tag,
+        "{:<20} {:>5}   |   {:<20} {:>5}".format("All Fields",        n_tag,
                                                  "X: Skipped",        n_tag_1f),
         "{:<20} {:>5}   |   {:<20} {:>5}".format("X: Finished",       n_tag_2,
                                                  "X: Near Moon/Sun",  n_tag_10),
@@ -218,7 +221,7 @@ def takeoff ( tel, yr, mn, dy, run=None,
 
     # start to make schedule
     clock_now = obs_begin
-    lst_clock = lambda c : (lst24 + c) % 24.0  # lst of start, use lst_clock(clock_now) to call this
+    lst_clock = lambda c : (lst24 + c - tzcorr) % 24.0  # lst of start, use lst_clock(clock_now) to call this
 
     tea(rep_f, "Begin to schedule from {clock}, LST {lst}\n".format(
         clock=common.angle.hour2str(clock_now), lst=common.angle.hour2str(lst_clock(clock_now))))
@@ -323,9 +326,21 @@ def takeoff ( tel, yr, mn, dy, run=None,
         airm_2, ha_2 = airm[ix_2], ha[ix_2]
         baz_2, balt_2 = baz[ix_2], balt[ix_2]
         bra_2, bde_2, bname_2 = bra[ix_2], bde[ix_2], bname[ix_2]
+        # added 20160903, distance to previous point, make move smaller
+        # forward has more priority
+        if not np.isnan(lra) :
+            bdis_2 = bde_2 - lde
+            ix_e = np.where(bra_2 >= lra)
+            ix_w = np.where(bra_2 < lra)
+            bdis_2[ix_e] += 0.5 * (bra_2[ix_e] - lra)
+            bdis_2[ix_w] += 1.0 * (lra - bra_2[ix_w])
+            rdis_2 = rank(bdis_2)
+            #rdis_2 = 0
+        else :
+            rdis_2 = 0
         # key formular is MOST important
         ############################################################
-        key_2 = rank(airm_2) + rank(-ha_2) + rank(bde_2)
+        key_2 = rank(airm_2) + rank(-ha_2) + rank(bde_2) + rdis_2
         #key_2 = stdscore(airm_2) * keyweight[0] + stdscore(-ha_2) * keyweight[1] + stdscore(bde_2) * keyweight[2]
         ############################################################
         # choose the best block
@@ -484,15 +499,18 @@ if __name__ == "__main__" :
     #overwrite = False, simulate = False, check = False
     import args
 
-    ar = {"tel":"", "year":sys.maxsize, "month":sys.maxsize, "day":sys.maxsize, "run":None,
-          "begin":float("nan"), "end":float("nan"), "moon":50.0, "airmass":1.75, "hourangle":4.0,
+    ar = {"tel":"", "year":sys.maxsize, "month":sys.maxsize, "day":sys.maxsize,
+          "run":None, "date":None,
+          "begin":float("nan"), "end":float("nan"),
+          "moon":50.0, "airmass":1.75, "hourangle":4.0,
           "overwrite":False, "simulate":False, "check":False}
-    al = {"arg_01":"tel", "arg_02":"year", "arg_03":"month", "arg_04":"day", "arg_05":"run"}
+    al = {"arg_01":"tel", "arg_02":"year", "arg_03":"month", "arg_04":"day",
+          "arg_05":"run", "arg_06":"date"}
     ar = args.arg_trans(sys.argv, ar, silent=True, alias=al)
 
     if ar["day"] == sys.maxsize :
         print ("""Syntax:
-    python takeoff.py tel year month day [run]
+    python takeoff.py tel year month day [run] [date]
         [begin=begin] [end=end] [moon=moon] [airmass=airmass] [hourangle=hourangle]
         [overwrite=true|false] [simulate=true|false] [check=[true|false]]
         tel: 3 letter code of telescope, we now have bok and xao
@@ -501,8 +519,10 @@ if __name__ == "__main__" :
         day: day, 1-31, or extented
         `tel` `year` `month` `day` are required fields
         run: code of run, default is yyyymm
+        date: date name, default is Jxxxx
+        run and date will be used as schedule path: `./tel/schedule/run/date/`
         begin: hours of observation begin time, for example, 18.75 is 18:45
-        end: hours of observation end time
+        end: hours of observation end time, same as begin
         moon: moon distance limit, default is 50.0 degrees
         airmass: airmass limit, default is 1.75
         hourangle: hourangle limit, default is 4.0 hours
@@ -511,7 +531,8 @@ if __name__ == "__main__" :
         check: generate check files, default is false
     """)
     else :
-        takeoff(ar["tel"], ar["year"], ar["month"], ar["day"], run=ar["run"],
+        takeoff(ar["tel"], ar["year"], ar["month"], ar["day"],
+                run=ar["run"], day=ar["date"],
                 obs_begin=ar["begin"], obs_end=ar["end"],
                 moon_dis_limit=ar["moon"], airmass_limit=ar["airmass"], ha_limit=ar["hourangle"],
                 overwrite=ar["overwrite"], simulate=ar["simulate"], check=ar["check"])
