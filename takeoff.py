@@ -270,7 +270,7 @@ def takeoff ( tel, yr, mn, dy, run=None, day=None,
     skip_total = 0.0
     exp_airmass = [] # collect airmass
     lra, lde = float("nan"), float("nan") # last field ra, dec
-    jump = 0
+    njump = 0
     keyweight = [1, 1, 1]
     # time need of a full round for a field
     plan_time = sum([(plans[p].expt + site.inter) * plans[p].repeat for p in active_plans]) / 3600.0
@@ -357,36 +357,8 @@ def takeoff ( tel, yr, mn, dy, run=None, day=None,
         for f in block_best.fields :
             f.tag = 0x07  # use this code, when clean candidate, it will be back to 3
 
-        # generate a check file about selection
-        if check :
-            # check file, list blocks: name, ra, dec, fields, airmass, rank
-            chk_fn = chk_fn_fmt(path=daypath, mjd=mjd18, sn=block_sn, bname=bname_best)
-            with open(chk_fn, "w") as chk_f :
-                chk_f.write(chk_tit)
-                i = 0
-                for s in key_2.argsort() :
-                    i += 1
-                    b = newblock[bname_2[s]]
-                    chk_f.write(chk_fmt(ord=i, key=key_2[s], bn=b.bname, ra=b.ra, de=b.de,
-                                az=baz_2[s], alt=balt_2[s], airm=airm_2[s], ha=ha_2[s], other="*"))
-                #for b in range(len(newblock)) :
-                #    chk_f.write(chk_fmt(ord=0, bn=bname[b], ra=bra[b], de=bde[b],
-                #        airm=airm[b], ha=ha[b], key=0.0, other="*" if b in ix_2[0] else " "))
-
-            # plot a check map
-            plotmap.plotmap(ara, ade, np.array([f.tag for f in afields]),
-                title=tel+" "+daystr+" "+common.angle.hour2str(clock_now),
-                pngfile=see_fn_fmt(path=daypath, mjd=mjd18, sn=block_sn, bname=bname_best),
-                mpos=(mpos.ra, mpos.dec),
-                spos=(spos.ra, spos.dec),
-                zenith=(lst_now * 15.0, site.lat) )
-
-        # clear candidate
-        for b in bname_2 :
-            for f in newblock[b].fields :
-                f.tag &= 0x03
-
         # script file, using format from configuration
+        jumped = False
         scr_fn = scr_fn_fmt(path=daypath, mjd=mjd18, sn=block_sn, bname=bname_best)
         block_time = 0  # time cost for this block, in seconds
         with open(scr_fn, "w") as scr_f :
@@ -399,7 +371,8 @@ def takeoff ( tel, yr, mn, dy, run=None, day=None,
                         # output to script and simulate file
                         if max(abs(common.angle.angle_dis(lra, f.ra, 1.0/np.cos(np.deg2rad(lde)))), abs(lde - f.de)) > site.bmove :
                             plan_f.write("\n") # a mark about big move, for bok not for xao
-                            jump += 1
+                            njump += 1
+                            jumped = True
                         scr = scr_fmt(e=schdutil.exposure_info.make(plans[p], f))
                         scr_f.write(scr)
                         plan_f.write(scr)
@@ -417,6 +390,40 @@ def takeoff ( tel, yr, mn, dy, run=None, day=None,
                         # time walking
                         block_time += plans[p].expt + site.inter
         #plan_f.write("\n")  # write a blank line to seperate blocks
+
+        # generate a check file about selection
+        if check :
+            # check file, list blocks: name, ra, dec, fields, airmass, rank
+            chk_fn = chk_fn_fmt(path=daypath, mjd=mjd18, sn=block_sn, bname=bname_best)
+            with open(chk_fn, "w") as chk_f :
+                chk_f.write(chk_tit)
+                i = 0
+                for s in key_2.argsort() :
+                    i += 1
+                    b = newblock[bname_2[s]]
+                    chk_f.write(chk_fmt(ord=i, key=key_2[s], bn=b.bname, ra=b.ra, de=b.de,
+                                        az=baz_2[s], alt=balt_2[s], airm=airm_2[s], ha=ha_2[s],
+                                        other="*"))
+                    # for b in range(len(newblock)) :
+                    #    chk_f.write(chk_fmt(ord=0, bn=bname[b], ra=bra[b], de=bde[b],
+                    #        airm=airm[b], ha=ha[b], key=0.0, other="*" if b in ix_2[0] else " "))
+
+            # plot a check map
+            maptitle = "{tel} {day} {now} {jump}".format(
+                tel=tel, day=daystr, now=common.angle.hour2str(clock_now),
+                jump=("*" if jumped else ""))
+            plotmap.plotmap(ara, ade, np.array([f.tag for f in afields]),
+                            title=maptitle,
+                            pngfile=see_fn_fmt(path=daypath, mjd=mjd18, sn=block_sn,
+                                               bname=bname_best),
+                            mpos=(mpos.ra, mpos.dec),
+                            spos=(spos.ra, spos.dec),
+                            zenith=(lst_now * 15.0, site.lat))
+
+        # clear candidate
+        for b in bname_2 :
+            for f in newblock[b].fields :
+                f.tag &= 0x03
 
         # report & summary
         tea(rep_f, rep_fmt( sn=block_sn,
@@ -458,13 +465,13 @@ def takeoff ( tel, yr, mn, dy, run=None, day=None,
     tea(rep_f, "")
     # total of schedule
     tea(rep_f, common.msg_box().box([
-        "Total {b} blocks, {e} exposures, {t} costed. From {s} to {f}".format(
+        "Total {b} blocks, {e} exposures, {t} cost. From {s} to {f}".format(
             b=block_sn, e=len(exp_airmass), t=common.angle.hour2str(clock_now-obs_begin),
             s=common.angle.hour2str(obs_begin), f=common.angle.hour2str(clock_now)),
         "Estimate airmass: {me:5.3f}+-{st:5.3f}, range: {mi:4.2f} -> {ma:4.2f}".format(
             me=np.mean(exp_airmass), st=np.std(exp_airmass),
             mi=np.min(exp_airmass), ma=np.max(exp_airmass)),
-        "Big move over {bmove} deg: {jump} jump(s),".format(jump=jump, bmove=site.bmove),
+        "Big move over {bmove} deg: {njump} jump(s),".format(njump=njump, bmove=site.bmove),
         "SKIP: {sc} session(s) encounted, {st} wasted.".format(
             sc=skip_count, st=common.angle.hour2str(skip_total))],
         title="Summary") )

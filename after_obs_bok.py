@@ -44,8 +44,9 @@ def after_obs_bok (yr, mn, dy, run=None, path=None) :
     repfile = "{tel}/obsed/footprint/Rep_J{mjd}.txt".format(tel=tel, mjd=mjd18)
     equfile = "{tel}/obsed/footprint/Equ_J{mjd}.png".format(tel=tel, mjd=mjd18)
     galfile = "{tel}/obsed/footprint/Gal_J{mjd}.png".format(tel=tel, mjd=mjd18)
+    os.mkdir("{tel}/obsed/{run}".format(tel=tel, run=run, day=mjd18))
     # 1. call ls
-    os.system("ls {path}/sage_survey/*/*.fits > {filelist}".format(path=path, filelist=filelist))
+    os.system("ls {path}/d*.fits > {filelist}".format(path=path, filelist=filelist))
     # 2. call check
     check(tel, yr, mn, dy, run)
     # 3. call collect
@@ -54,12 +55,12 @@ def after_obs_bok (yr, mn, dy, run=None, path=None) :
     footprint(tel, reportfile=repfile, equfile=equfile, galfile=galfile, run=run, day=mjd18)
     # info
     print ("Send following files to SAGE Survey group:"
-           "\t{filelist}"
-           "\t{checkfile}"
-           "\t{obsedfile}"
-           "\t{equfile}"
-           "\t{galfile}"
-           "\t{repfile}".format(
+           "\n\t{filelist}"
+           "\n\t{checkfile}"
+           "\n\t{obsedfile}"
+           "\n\t{equfile}"
+           "\n\t{galfile}"
+           "\n\t{repfile}".format(
         filelist=filelist, checkfile=checkfile, obsedfile=obsedfile,
         equfile=equfile, galfile=galfile, repfile=repfile
     ))
@@ -71,8 +72,8 @@ if __name__ == "__main__" :
 
     ar = {"year":sys.maxsize, "month":sys.maxsize, "day":sys.maxsize,
           "run":"", "path":""}
-    al = {"arg_01":"tel", "arg_02":"year", "arg_03":"month", "arg_04":"day",
-          "arg_05":"run", "arg_06":"path"}
+    al = {"arg_01":"year", "arg_02":"month", "arg_03":"day",
+          "arg_04":"run", "arg_05":"path"}
     ar = args.arg_trans(sys.argv, ar, silent=True, alias=al)
 
     if ar["day"] == sys.maxsize :
