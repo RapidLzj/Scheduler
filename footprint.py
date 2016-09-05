@@ -49,8 +49,8 @@ def footprint (tel, reportfile=None, equfile=None, galfile=None,
     obsedlist = schdutil.ls_files("{tel}/obsed/*/obsed.J*.lst".format(tel=tel))
 
     if run is not None and day is not None :
-        marklist = schdutil.ls_files("{tel}/obsed/{run}/obsed.J{day:0>4d}.lst".format(tel=tel, run=run, day=day))
-        marktext = "J{day:0>4d}".format(run=run, day=day)
+        marklist = schdutil.ls_files("{tel}/obsed/{run}/obsed.J{day}.lst".format(tel=tel, run=run, day=day))
+        marktext = "J{day}".format(run=run, day=day)
     elif run is not None and day is None :
         marklist = schdutil.ls_files("{tel}/obsed/{run}/obsed.J*.lst".format(tel=tel, run=run))
         marktext = "{run}".format(run=run, day=day)
